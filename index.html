@@ -8,11 +8,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Séance">
+<meta name="apple-mobile-web-app-title" content="Klap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="icon-180.png">
-<title>Séance</title>
+<title>Klap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
@@ -51,6 +52,7 @@ a{color:inherit}
 
 /* top bar */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;padding-block:14px 10px}
+.brand{width:38px;height:38px;flex:none;display:block;border-radius:10px}
 .loc{display:flex;align-items:center;gap:10px;min-width:0;flex:1;text-align:left}
 .loc-ico{width:38px;height:38px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;flex:none;color:var(--accent)}
 .loc-txt{min-width:0}
@@ -174,9 +176,10 @@ a{color:inherit}
 <body>
 <div class="app">
   <header class="top">
+    <img class="brand" src="icon.svg" alt="Klap" width="38" height="38">
     <button class="loc" id="locBtn" aria-haspopup="dialog">
-      <span class="loc-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
-      <span class="loc-txt"><span class="loc-label" id="locLabel">Ma position</span>
+      <span class="loc-ico" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
+      <span class="loc-txt"><span class="loc-label"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;color:var(--accent)"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="locLabel">Ma position</span></span>
         <span class="loc-name"><span id="locName">Rennes</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
     </button>
     <div class="clock" title="Heure actuelle"><i></i><span id="clock">--:--</span></div>
@@ -364,7 +367,7 @@ function renderList(c){
     $("list").innerHTML = `<div class="empty"><b>${any? "Plus rien ce jour-là" : "Pas de séance"}</b>${any && isToday ? "Les séances d'aujourd'hui sont passées ou ne correspondent pas aux filtres. Regarde demain." : "Essaie un autre jour, un autre cinéma ou enlève un filtre."}</div>`;
   } else $("list").innerHTML = items.map(card).join("");
   const up = new Date(DATA.updated);
-  $("foot").innerHTML = `Séances, notes presse et spectateurs : AlloCiné.<br>Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
+  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
 }
 function render(){ if(!DATA) return; renderTop(); const c=renderHero(); renderDays(c); renderList(c); }
 

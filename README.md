@@ -1,4 +1,4 @@
-# Séance
+# Klap
 
 Le cinéma le plus proche de toi, ses séances qui suivent l'heure, les notes presse et spectateurs d'AlloCiné et un conseil pour chaque film.
 
