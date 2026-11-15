@@ -41,10 +41,10 @@
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{touch-action:pan-x pan-y}
+*,*::before,*::after{touch-action:pan-x pan-y}
 html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;margin:0;background:var(--bg);overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body,button,a{-webkit-tap-highlight-color:transparent}
-button,a,.chip,.day,.card,.loc{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button,a,.chip,.day,.card,.loc{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 img{-webkit-user-drag:none;-webkit-touch-callout:none}
 #scroller{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 #scroller.locked{overflow:hidden}
@@ -382,7 +382,7 @@ function renderList(c){
     $("list").innerHTML = `<div class="empty"><b>${any? "Plus rien ce jour-là" : "Pas de séance"}</b>${any && isToday ? "Les séances d'aujourd'hui sont passées ou ne correspondent pas aux filtres. Regarde demain." : "Essaie un autre jour, un autre cinéma ou enlève un filtre."}</div>`;
   } else $("list").innerHTML = items.map(card).join("");
   const up = new Date(DATA.updated);
-  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version 5 · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
+  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version 6 · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
 }
 function render(){ if(!DATA) return;
   const keep=["cineStrip","days"].map(id=>[id,$(id).scrollLeft]);
@@ -525,6 +525,11 @@ document.addEventListener("touchmove",e=>{ if(e.touches.length>1 && e.cancelable
 let lastTap=0, lastEl=null;
 document.addEventListener("touchend",e=>{ const now=Date.now(); if(now-lastTap<300 && e.target===lastEl && !e.target.closest("input,textarea") && e.cancelable) e.preventDefault(); lastTap=now; lastEl=e.target; },{passive:false});
 document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
+["gesturestart","gesturechange"].forEach(t=>window.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+const pin=()=>{ if(window.scrollY||window.scrollX) window.scrollTo(0,0); };
+window.addEventListener("scroll",pin,{passive:true});
+document.addEventListener("focusin",()=>setTimeout(pin,0));
+if(window.visualViewport) visualViewport.addEventListener("scroll",pin);
 const vpMeta=document.querySelector('meta[name="viewport"]');
 function resetZoom(){ if(!vpMeta) return; const c=vpMeta.content; vpMeta.content=c.replace("maximum-scale=1","maximum-scale=1.0"); requestAnimationFrame(()=>{ vpMeta.content=c; }); }
 document.addEventListener("focusout",e=>{ if(e.target.matches("input,textarea")) setTimeout(resetZoom,50); });
