@@ -42,6 +42,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{touch-action:pan-x pan-y}
 html,body{background:var(--bg);overflow-x:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body,button,a{-webkit-tap-highlight-color:transparent}
 button,a,.chip,.day,.card,.loc{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -142,7 +143,8 @@ a{color:inherit}
 .sheet-head h3{font-family:var(--f-display);font-size:21px;margin:0}
 .x{width:34px;height:34px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;flex:none}
 .sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1;min-height:0;padding:0 max(18px,env(safe-area-inset-right,0px)) 22px max(18px,env(safe-area-inset-left,0px))}
-.search{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:16px;outline:none;-webkit-appearance:none;appearance:none}
+.search{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:16px!important;outline:none;-webkit-appearance:none;appearance:none}
+input,select,textarea{font-size:16px!important}
 .search-wrap{position:relative}
 .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
 .row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left}
@@ -498,6 +500,17 @@ function locate(silent){
 }
 $("gpsBtn").onclick=()=>locate(false);
 if(!store.get("loc") && navigator.geolocation) locate(true);
+
+/* no zoom, ever: pinch, double tap, or the auto-zoom on a text field */
+["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener("touchmove",e=>{ if(e.touches.length>1 && e.cancelable) e.preventDefault(); },{passive:false});
+let lastTap=0, lastEl=null;
+document.addEventListener("touchend",e=>{ const now=Date.now(); if(now-lastTap<300 && e.target===lastEl && !e.target.closest("input,textarea") && e.cancelable) e.preventDefault(); lastTap=now; lastEl=e.target; },{passive:false});
+document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
+const vpMeta=document.querySelector('meta[name="viewport"]');
+function resetZoom(){ if(!vpMeta) return; const c=vpMeta.content; vpMeta.content=c.replace("maximum-scale=1","maximum-scale=1.0"); requestAnimationFrame(()=>{ vpMeta.content=c; }); }
+document.addEventListener("focusout",e=>{ if(e.target.matches("input,textarea")) setTimeout(resetZoom,50); });
+if(window.visualViewport) visualViewport.addEventListener("resize",()=>{ if(visualViewport.scale>1.01 && !document.activeElement.matches("input,textarea")) resetZoom(); });
 
 /* clock: refresh time-dependent bits every 30 s */
 function tick(){ const d=new Date(); $("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`; }
