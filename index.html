@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Le cinéma le plus proche, ses séances en temps réel, les notes presse et spectateurs et un conseil pour chaque film.">
+<meta name="theme-color" content="#0d0e17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Séance">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Séance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one phone-width app column — sticky location bar, nearest-cinema hero, day strip, film list; sheets slide up from the bottom. */
+:root{
+  --bg:#0d0e17; --surface:#171826; --surface-2:#20223a; --line:#2b2d48;
+  --fg:#f1f0f7; --muted:#9a9bb5; --accent:#ffb547; --accent-ink:#1b1305;
+  --good:#4fd18b; --ok:#a7d84f; --mid:#f2b84b; --bad:#ff6b6b; --none:#7c7e99;
+  --shadow:0 18px 40px -18px rgba(0,0,0,.7);
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f3f3f8; --surface:#ffffff; --surface-2:#ececf4; --line:#dcdce8;
+  --fg:#15162a; --muted:#62647f; --accent:#e58a00; --accent-ink:#ffffff;
+  --good:#16a35a; --ok:#6a9d12; --mid:#c98700; --bad:#d93b3b; --none:#8a8ca6;
+  --shadow:0 14px 34px -18px rgba(30,30,70,.35); color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#f3f3f8; --surface:#ffffff; --surface-2:#ececf4; --line:#dcdce8;
+  --fg:#15162a; --muted:#62647f; --accent:#e58a00; --accent-ink:#ffffff;
+  --good:#16a35a; --ok:#6a9d12; --mid:#c98700; --bad:#d93b3b; --none:#8a8ca6;
+  --shadow:0 14px 34px -18px rgba(30,30,70,.35); color-scheme:light}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:10px}
+a{color:inherit}
+.app{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;padding-block:14px 10px}
+.loc{display:flex;align-items:center;gap:10px;min-width:0;flex:1;text-align:left}
+.loc-ico{width:38px;height:38px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;flex:none;color:var(--accent)}
+.loc-txt{min-width:0}
+.loc-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.loc-name{font-family:var(--f-display);font-weight:700;font-size:19px;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clock{font-family:var(--f-mono);font-weight:700;font-size:13px;background:var(--surface-2);padding:7px 10px;border-radius:10px;display:flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
+.clock i{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 25%,transparent)}
+
+/* hero */
+.hero{margin-top:6px;background:linear-gradient(140deg,var(--surface-2),var(--surface) 70%);border:1px solid var(--line);border-radius:22px;padding:18px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-80px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 30%,transparent),transparent 65%);pointer-events:none}
+.eyebrow{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.hero h1{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1.05;margin:6px 0 4px;text-wrap:balance;letter-spacing:-.01em}
+.hero-meta{color:var(--muted);font-size:13.5px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.hero-meta b{color:var(--fg);font-weight:600}
+.hero-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;position:relative;z-index:1}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:12px;font-weight:600;font-size:13.5px;text-decoration:none;background:var(--bg);border:1px solid var(--line)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+
+.cine-strip{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 2px;margin:0 -2px;scrollbar-width:none}
+.cine-strip::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:500;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.chip small{color:var(--muted);font-family:var(--f-mono);font-size:11px}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip[aria-pressed="true"] small{color:inherit;opacity:.7}
+
+/* days + tools */
+.days{display:flex;gap:8px;margin-top:18px;overflow-x:auto;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.day{flex:none;min-width:64px;padding:8px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:center}
+.day b{display:block;font-family:var(--f-display);font-size:15px}
+.day span{font-size:11.5px;color:var(--muted)}
+.day[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day[aria-pressed="true"] span{color:inherit;opacity:.8}
+.day:disabled{opacity:.35;cursor:default}
+.tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0 10px;flex-wrap:wrap}
+.tools h2{font-family:var(--f-display);font-size:20px;margin:0}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{padding:6px 10px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--fg)}
+.filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.filters .chip{padding:6px 11px;font-size:12.5px}
+
+/* film card */
+.list{display:flex;flex-direction:column;gap:12px}
+.card{display:grid;grid-template-columns:92px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:12px;text-align:left;width:100%;transition:transform .15s ease,border-color .15s}
+.card:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.card:active{transform:scale(.99)}
+.poster{width:92px;aspect-ratio:3/4;border-radius:12px;object-fit:cover;background:var(--surface-2);display:block;max-width:100%}
+.poster.ph{display:grid;place-items:center;font-family:var(--f-display);font-size:28px;color:var(--muted)}
+.c-body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.c-title{font-family:var(--f-display);font-weight:700;font-size:17px;line-height:1.15;margin:0;text-wrap:balance}
+.c-sub{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scores{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.score{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.score b{font-family:var(--f-mono);color:var(--fg);font-size:12.5px}
+.star{color:var(--accent)}
+.verdict{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--v) 16%,transparent);color:var(--v)}
+.verdict::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--v)}
+.times{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.t{font-family:var(--f-mono);font-weight:700;font-size:12.5px;padding:5px 8px;border-radius:8px;background:var(--surface-2);font-variant-numeric:tabular-nums;display:inline-flex;gap:4px;align-items:center}
+.t sup{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.t.next{background:var(--accent);color:var(--accent-ink)}
+.t.next sup{color:inherit;opacity:.75}
+.t.past{opacity:.35;text-decoration:line-through}
+.soon{font-size:12px;color:var(--accent);font-weight:600}
+
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:20px;padding:28px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--fg);font-family:var(--f-display);font-size:18px;margin-bottom:4px}
+.foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+
+/* sheets */
+.scrim{position:fixed;inset:0;background:rgba(5,5,12,.55);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:560px;margin:0 auto;background:var(--surface);border-radius:24px 24px 0 0;max-height:88%;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.open{transform:none}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:10px auto 4px;flex:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px max(18px,env(safe-area-inset-right,0px)) 10px max(18px,env(safe-area-inset-left,0px))}
+.sheet-head h3{font-family:var(--f-display);font-size:21px;margin:0}
+.x{width:34px;height:34px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;flex:none}
+.sheet-body{overflow-y:auto;padding:0 max(18px,env(safe-area-inset-right,0px)) 22px max(18px,env(safe-area-inset-left,0px))}
+.search{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;outline:none}
+.search-wrap{position:relative}
+.search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left}
+.row:last-child{border-bottom:0}
+.row .ico{width:38px;height:38px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;flex:none}
+.row .ico.acc{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.row b{display:block;font-weight:600}
+.row span{font-size:12.5px;color:var(--muted)}
+.row .chk{margin-left:auto;color:var(--accent)}
+.group-label{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:18px 0 2px}
+.note{font-size:12.5px;color:var(--muted);background:var(--surface-2);padding:10px 12px;border-radius:12px;margin-top:10px}
+
+/* film detail */
+.d-top{display:grid;grid-template-columns:118px 1fr;gap:16px}
+.d-top .poster{width:118px;border-radius:14px}
+.d-title{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.05;margin:0 0 6px;text-wrap:balance}
+.d-meta{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.advice{margin-top:16px;border-radius:18px;padding:14px 16px;background:color-mix(in srgb,var(--v) 12%,var(--surface-2));border:1px solid color-mix(in srgb,var(--v) 35%,transparent)}
+.advice .lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--v);font-weight:700}
+.advice h4{font-family:var(--f-display);font-size:20px;margin:2px 0 6px}
+.advice p{margin:0;font-size:14px}
+.bars{display:grid;gap:10px;margin-top:14px}
+.bar-row{display:grid;grid-template-columns:92px 1fr 64px;gap:10px;align-items:center;font-size:13px}
+.bar{height:8px;border-radius:9px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:var(--accent)}
+.bar-row b{font-family:var(--f-mono);text-align:right}
+.bar-row small{grid-column:2/4;color:var(--muted);font-size:11.5px;margin-top:-6px}
+.syn{font-size:14.5px;line-height:1.55;margin:16px 0 0;max-width:65ch}
+.sec-t{font-family:var(--f-display);font-size:16px;margin:20px 0 8px}
+.d-times{display:flex;flex-wrap:wrap;gap:8px}
+.d-times .t{font-size:14px;padding:8px 10px}
+.fx{font-size:9.5px;letter-spacing:.04em;padding:2px 4px;border-radius:4px;background:var(--bg);color:var(--muted)}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+
+@media (max-width:380px){.card{grid-template-columns:76px 1fr}.poster{width:76px}.d-top{grid-template-columns:96px 1fr}.d-top .poster{width:96px}.hero h1{font-size:24px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <button class="loc" id="locBtn" aria-haspopup="dialog">
+      <span class="loc-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
+      <span class="loc-txt"><span class="loc-label" id="locLabel">Ma position</span>
+        <span class="loc-name"><span id="locName">Rennes</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
+    </button>
+    <div class="clock" title="Heure actuelle"><i></i><span id="clock">--:--</span></div>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="eyebrow" id="heroEyebrow">Cinéma le plus proche</div>
+    <h1 id="cineName">Chargement…</h1>
+    <div class="hero-meta" id="cineMeta"></div>
+    <div class="hero-actions" id="cineActions"></div>
+  </section>
+  <div class="cine-strip" id="cineStrip" role="group" aria-label="Autres cinémas"></div>
+
+  <div class="days" id="days" role="group" aria-label="Jour"></div>
+
+  <div class="tools">
+    <h2 id="listTitle">À l'affiche</h2>
+    <div class="seg" role="group" aria-label="Trier">
+      <button id="sortSoon" aria-pressed="true">Bientôt</button>
+      <button id="sortBest" aria-pressed="false">Mieux notés</button>
+    </div>
+  </div>
+  <div class="filters" id="filters" role="group" aria-label="Filtres">
+    <button class="chip" data-f="vo" aria-pressed="false">VO uniquement</button>
+    <button class="chip" data-f="good" aria-pressed="false">Bien notés (3,5+)</button>
+    <button class="chip" data-f="kids" aria-pressed="false">En famille</button>
+  </div>
+  <div class="list" id="list"></div>
+  <p class="foot" id="foot"></p>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<section class="sheet" id="locSheet" role="dialog" aria-modal="true" aria-labelledby="locTitle">
+  <div class="grab"></div>
+  <div class="sheet-head"><h3 id="locTitle">Changer de position</h3><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <div class="search-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="search" id="locSearch" type="search" placeholder="Ville ou cinéma" autocomplete="off"></div>
+    <button class="row" id="gpsBtn"><span class="ico acc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></span><span><b>Autour de moi</b><span id="gpsState">Utiliser la position du téléphone</span></span></button>
+    <div id="locList"></div>
+  </div>
+</section>
+
+<section class="sheet" id="filmSheet" role="dialog" aria-modal="true" aria-label="Fiche du film">
+  <div class="grab"></div>
+  <div class="sheet-head"><span class="eyebrow" id="filmCine"></span><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body" id="filmBody"></div>
+</section>
+
+<script>
+(() => {
+const CITIES = [
+  {name:"Rennes", lat:48.1113, lng:-1.6800, dept:"Ille-et-Vilaine"},
+  {name:"Saint-Malo", lat:48.6493, lng:-2.0257, dept:"Ille-et-Vilaine"},
+  {name:"Lannion", lat:48.7326, lng:-3.4566, dept:"Côtes-d'Armor"},
+  {name:"Langon", lat:44.5531, lng:-0.2496, dept:"Gironde"},
+];
+const FX = {DOLBY_CINEMA:"DOLBY", E_4DX:"4DX", ICE:"ICE", LASER:"LASER", PLF:"GRAND ÉCRAN", F_4K:"4K", LUXURY:"CONFORT", DOLBY_ATMOS:"ATMOS", IMAX:"IMAX", E_3D:"3D"};
+const KIDS = /Animation|Famille/;
+const posterSrc = m => m.img || (m.p ? "https://fr.web.img6.acsta.net/c_215_290" + m.p : null);
+window.posterFail = img => { const d=document.createElement("div"); d.className="poster ph"; d.textContent=img.alt ? img.alt[0] : "?"; img.replaceWith(d); };
+const $ = id => document.getElementById(id);
+const store = { get(k){try{return JSON.parse(localStorage.getItem("seance:"+k))}catch(e){return null}}, set(k,v){try{localStorage.setItem("seance:"+k,JSON.stringify(v))}catch(e){}} };
+
+let DATA = null;
+const state = { loc: store.get("loc") || {kind:"city", name:"Rennes", lat:48.1113, lng:-1.6800}, cine:null, day:null, sort:"soon", f:{vo:false,good:false,kids:false} };
+
+/* ---------- helpers ---------- */
+const pad = n => String(n).padStart(2,"0");
+const isoDay = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const nowMin = () => { const d=new Date(); return d.getHours()*60+d.getMinutes(); };
+const toMin = h => +h.slice(0,2)*60 + +h.slice(3,5);
+const fr1 = x => x==null ? "–" : x.toFixed(1).replace(".",",");
+const nf = new Intl.NumberFormat("fr-FR");
+function km(a,b){const R=6371,r=Math.PI/180,dl=(b.lat-a.lat)*r,dg=(b.lng-a.lng)*r;const x=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+const fmtKm = d => d<1 ? `${Math.round(d*1000/10)*10} m` : `${d<10?d.toFixed(1).replace(".",","):Math.round(d)} km`;
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function dayLabel(iso){const t=isoDay(new Date());const tm=new Date();tm.setDate(tm.getDate()+1);
+  const d=new Date(iso+"T12:00:00");
+  const top = iso===t ? "Auj." : iso===isoDay(tm) ? "Demain" : d.toLocaleDateString("fr-FR",{weekday:"short"}).replace(".","");
+  return {top: top[0].toUpperCase()+top.slice(1), sub: d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"}).replace(".","")};}
+function inMin(m){ if(m<60) return `dans ${m} min`; const h=Math.floor(m/60), r=m%60; return `dans ${h} h${r?" "+pad(r):""}`; }
+
+/* ---------- verdict ---------- */
+function verdict(m){
+  const p=m.pr, u=m.u, pc=m.pc||0, uc=m.uc||0;
+  if(p==null && (u==null || uc<15)) return {key:"none", label:"Pas encore noté", color:"var(--none)", score:null,
+    title:"Trop tôt pour juger", text:"Le film n'a pas encore assez de notes pour qu'on puisse le recommander. Fie-toi au synopsis et à la bande-annonce."};
+  const wu = u==null ? 0 : Math.min(1, uc/200)*0.5;
+  const wp = p==null ? 0 : Math.min(1, pc/8)*0.5;
+  const s = (wp+wu) ? ((p??0)*wp + (u??0)*wu)/(wp+wu) : (p??u);
+  let v;
+  if(s>=4.1) v={key:"must",label:"Incontournable",color:"var(--good)",title:"Fonce, c'est un grand film"};
+  else if(s>=3.6) v={key:"great",label:"Très bon choix",color:"var(--good)",title:"Très bon choix"};
+  else if(s>=3.1) v={key:"good",label:"Bon film",color:"var(--ok)",title:"Une bonne séance"};
+  else if(s>=2.6) v={key:"mixed",label:"Mitigé",color:"var(--mid)",title:"Avis partagés"};
+  else v={key:"bad",label:"À éviter",color:"var(--bad)",title:"Plutôt à éviter"};
+  const parts=[];
+  if(p!=null && u!=null){
+    const gap=u-p;
+    if(Math.abs(gap)<0.5) parts.push(`La presse (${fr1(p)}/5) et le public (${fr1(u)}/5) sont d'accord.`);
+    else if(gap>0) parts.push(`Le public (${fr1(u)}/5) l'aime bien plus que la presse (${fr1(p)}/5) : un film qui plaît en salle plus qu'aux critiques.`);
+    else parts.push(`La presse (${fr1(p)}/5) est plus enthousiaste que le public (${fr1(u)}/5) : plutôt un film d'auteur ou exigeant.`);
+  } else if(p!=null) parts.push(`Seule la presse l'a noté pour l'instant : ${fr1(p)}/5 sur ${pc} critique${pc>1?"s":""}.`);
+  else parts.push(`Le public lui donne ${fr1(u)}/5 sur ${nf.format(uc)} notes. Pas encore de critiques presse.`);
+  const tail = {must:"Une des meilleures séances du moment.", great:"Tu devrais passer un très bon moment.", good:"Une séance solide, surtout si le genre te plaît.", mixed:"À voir si le sujet t'attire vraiment.", bad:"Les notes sont mauvaises des deux côtés : il y a sûrement mieux à l'affiche."}[v.key];
+  parts.push(tail);
+  return {...v, score:s, text:parts.join(" ")};
+}
+
+/* ---------- data ---------- */
+function cinemasByDistance(){ return DATA.cinemas.map(c=>({...c, dist:km(state.loc,c)})).sort((a,b)=>a.dist-b.dist); }
+function availableDays(c){ const today=isoDay(new Date()); return DATA.days.filter(d=>d>=today); }
+function sessionsFor(c, day){
+  const entries = Object.entries(c.days[day]||{});
+  const isToday = day===isoDay(new Date()); const nm=nowMin();
+  return entries.map(([id,ss])=>{
+    const m=DATA.movies[id]; let list=ss;
+    if(state.f.vo) list=list.filter(s=>s.v==="VO");
+    const upcoming = isToday ? list.filter(s=>toMin(s.h)>=nm-5) : list;
+    return {id, m, v:verdict(m), all:list, upcoming, next: upcoming[0]};
+  }).filter(x=>x.all.length && x.upcoming.length)
+    .filter(x=>!state.f.good || (x.v.score!=null && x.v.score>=3.5))
+    .filter(x=>!state.f.kids || KIDS.test((x.m.g||[]).join(" ")));
+}
+
+/* ---------- render ---------- */
+function renderTop(){
+  $("locName").textContent = state.loc.name;
+  $("locLabel").textContent = state.loc.kind==="gps" ? "Autour de moi" : "Ma position";
+}
+function renderHero(){
+  const list = cinemasByDistance();
+  if(!state.cine || !list.find(c=>c.id===state.cine)) state.cine = list[0].id;
+  const c = list.find(x=>x.id===state.cine);
+  const nearest = c.id===list[0].id;
+  $("heroEyebrow").textContent = !nearest ? "Cinéma choisi" : c.dist>60 ? "Cinéma suivi le plus proche" : "Cinéma le plus proche";
+  $("cineName").textContent = c.name;
+  $("cineMeta").innerHTML = `<span><b>${fmtKm(c.dist)}</b> de ${esc(state.loc.name)}</span><span>${esc(c.addr!==c.town?c.addr+", ":"")}${esc(c.town)}</span>`;
+  const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name+" "+c.town)}`;
+  $("cineActions").innerHTML = `<a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+    <a class="btn" href="${maps}" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-8-8 18-2-8z"/></svg>Itinéraire</a>`;
+  $("cineStrip").innerHTML = list.slice(0,8).map(x=>`<button class="chip" data-cine="${x.id}" aria-pressed="${x.id===c.id}">${esc(x.name)} <small>${fmtKm(x.dist)}</small></button>`).join("");
+  return c;
+}
+function renderDays(c){
+  const days = availableDays(c);
+  if(!state.day || !days.includes(state.day)){
+    // first day that still has something to see
+    state.day = days.find(d=>sessionsFor(c,d).length) || days[0];
+  }
+  $("days").innerHTML = days.map(d=>{const l=dayLabel(d);const has=Object.keys(c.days[d]||{}).length>0;
+    return `<button class="day" data-day="${d}" aria-pressed="${d===state.day}" ${has?"":"disabled"}><b>${l.top}</b><span>${l.sub}</span></button>`}).join("");
+}
+function card(x){
+  const m=x.m, v=x.v, isToday=state.day===isoDay(new Date()), nm=nowMin();
+  const img = posterSrc(m) ? `<img class="poster" src="${posterSrc(m)}" alt="${esc(m.t)}" loading="lazy" referrerpolicy="no-referrer" onerror="posterFail(this)">` : `<div class="poster ph">${esc((m.t||"?")[0])}</div>`;
+  const times = x.all.map(s=>{const past=isToday && toMin(s.h)<nm-5; const next=s===x.next && isToday;
+    return `<span class="t${past?" past":""}${next?" next":""}">${s.h}${s.v==="VO"?"<sup>VO</sup>":""}</span>`}).join("");
+  const soon = isToday && x.next ? `<span class="soon">Prochaine ${inMin(Math.max(0,toMin(x.next.h)-nm))}</span>` : "";
+  return `<button class="card" data-film="${x.id}">
+    ${img}
+    <div class="c-body">
+      <h3 class="c-title">${esc(m.t)}</h3>
+      <div class="c-sub">${esc([m.rt&&m.rt!=="0h 00min"?m.rt.replace(" ",""):null,(m.g||[]).slice(0,2).join(", ")].filter(Boolean).join(" · "))}</div>
+      <div class="scores">
+        <span class="verdict" style="--v:${v.color}">${v.label}</span>
+        ${m.pr!=null?`<span class="score">Presse <b>${fr1(m.pr)}</b></span>`:""}
+        ${m.u!=null?`<span class="score">Public <b>${fr1(m.u)}</b><span class="star">★</span></span>`:""}
+      </div>
+      ${soon}
+      <div class="times">${times}</div>
+    </div></button>`;
+}
+function renderList(c){
+  let items = sessionsFor(c, state.day);
+  if(state.sort==="best") items.sort((a,b)=>(b.v.score??-1)-(a.v.score??-1));
+  else items.sort((a,b)=>toMin(a.next.h)-toMin(b.next.h));
+  const isToday = state.day===isoDay(new Date());
+  $("listTitle").textContent = isToday ? "Encore aujourd'hui" : "À l'affiche";
+  if(!items.length){
+    const any = Object.keys(c.days[state.day]||{}).length;
+    $("list").innerHTML = `<div class="empty"><b>${any? "Plus rien ce jour-là" : "Pas de séance"}</b>${any && isToday ? "Les séances d'aujourd'hui sont passées ou ne correspondent pas aux filtres. Regarde demain." : "Essaie un autre jour, un autre cinéma ou enlève un filtre."}</div>`;
+  } else $("list").innerHTML = items.map(card).join("");
+  const up = new Date(DATA.updated);
+  $("foot").innerHTML = `Séances, notes presse et spectateurs : AlloCiné.<br>Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
+}
+function render(){ if(!DATA) return; renderTop(); const c=renderHero(); renderDays(c); renderList(c); }
+
+/* ---------- film sheet ---------- */
+function openFilm(id){
+  const c = DATA.cinemas.find(x=>x.id===state.cine); const m=DATA.movies[id]; const v=verdict(m);
+  const isToday=state.day===isoDay(new Date()), nm=nowMin();
+  const ss=(c.days[state.day]||{})[id]||[]; const next=ss.find(s=>!isToday||toMin(s.h)>=nm-5);
+  const l=dayLabel(state.day);
+  $("filmCine").textContent = `${c.name} · ${l.top} ${l.sub}`;
+  const bar=(lbl,val,cnt,unit)=> val==null ? "" : `<div class="bar-row"><span>${lbl}</span><div class="bar"><i style="width:${val/5*100}%"></i></div><b>${fr1(val)}/5</b><small>${nf.format(cnt||0)} ${unit}</small></div>`;
+  $("filmBody").innerHTML = `
+    <div class="d-top">
+      ${posterSrc(m)?`<img class="poster" src="${posterSrc(m)}" alt="${esc(m.t)}" referrerpolicy="no-referrer" onerror="posterFail(this)">`:`<div class="poster ph">${esc((m.t||"?")[0])}</div>`}
+      <div>
+        <h2 class="d-title">${esc(m.t)}</h2>
+        <div class="d-meta">
+          ${m.ot&&m.ot!==m.t?`<span>${esc(m.ot)}</span>`:""}
+          <span>${esc([m.rt&&m.rt!=="0h 00min"?m.rt:null,(m.g||[]).join(", ")].filter(Boolean).join(" · "))}</span>
+          ${m.d?`<span>De <b>${esc(m.d)}</b></span>`:""}
+          ${m.c&&m.c.length?`<span>Avec ${esc(m.c.join(", "))}</span>`:""}
+          ${m.ce?`<span>${esc(m.ce)}</span>`:""}
+        </div>
+      </div>
+    </div>
+    <div class="advice" style="--v:${v.color}">
+      <div class="lbl">Mon conseil · ${v.label}${v.score!=null?` · ${fr1(v.score)}/5`:""}</div>
+      <h4>${v.title}</h4><p>${v.text}</p>
+    </div>
+    <div class="bars">${bar("Presse",m.pr,m.pc,(m.pc>1?"critiques":"critique"))}${bar("Spectateurs",m.u,m.uc,"notes")}</div>
+    ${m.s?`<p class="syn">${esc(m.s)}</p>`:""}
+    <h4 class="sec-t">Séances · ${l.top} ${l.sub}</h4>
+    <div class="d-times">${ss.map(s=>{const past=isToday&&toMin(s.h)<nm-5;
+      return `<span class="t${past?" past":""}${s===next&&isToday?" next":""}">${s.h}<sup>${s.v}</sup>${(s.fx||[]).map(f=>FX[f]?`<span class="fx">${FX[f]}</span>`:"").join("")}</span>`}).join("")}</div>
+    <div class="links">
+      <a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver une place</a>
+      <a class="btn" href="https://www.allocine.fr/film/fichefilm_gen_cfilm=${id}.html" target="_blank" rel="noopener">Critiques complètes</a>
+      <a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(m.t+" bande annonce")}" target="_blank" rel="noopener">Bande-annonce</a>
+    </div>`;
+  $("filmBody").scrollTop=0; openSheet("filmSheet");
+}
+
+/* ---------- location sheet ---------- */
+function renderLocList(q=""){
+  const n = s => s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+  const qq=n(q.trim());
+  const cities = CITIES.filter(c=>!qq || n(c.name+" "+c.dept).includes(qq));
+  const cines = DATA ? DATA.cinemas.filter(c=>!qq || n(c.name+" "+c.town+" "+c.city).includes(qq)) : [];
+  const pin = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`;
+  const film = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>`;
+  const check = `<svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="m5 12 5 5 9-10"/></svg>`;
+  let h="";
+  if(cities.length) h += `<div class="group-label">Villes</div>` + cities.map(c=>{
+    const n = DATA ? DATA.cinemas.filter(x=>km(c,x)<25).length : 0;
+    return `<button class="row" data-city="${esc(c.name)}"><span class="ico">${pin}</span><span><b>${esc(c.name)}</b><span>${esc(c.dept)} · ${n} cinéma${n>1?"s":""}</span></span>${state.loc.kind==="city"&&state.loc.name===c.name?check:""}</button>`}).join("");
+  if(cines.length) h += `<div class="group-label">Cinémas</div>` + cines.map(c=>
+    `<button class="row" data-pick="${c.id}"><span class="ico">${film}</span><span><b>${esc(c.name)}</b><span>${esc(c.town)}</span></span>${state.cine===c.id?check:""}</button>`).join("");
+  if(!h) h = `<div class="note">Aucune ville ne correspond à « ${esc(q)} ». Les séances sont disponibles pour Rennes, Saint-Malo, Lannion et Langon.</div>`;
+  $("locList").innerHTML = h;
+}
+function setLoc(loc){ state.loc=loc; state.cine=null; state.day=null; store.set("loc",loc); closeSheets(); render(); }
+
+/* ---------- sheets ---------- */
+let lastFocus=null;
+function openSheet(id){ lastFocus=document.activeElement; $("scrim").classList.add("open"); $(id).classList.add("open"); setTimeout(()=>$(id).querySelector("[data-close]").focus(),50); }
+function closeSheets(){ document.querySelectorAll(".sheet.open").forEach(s=>s.classList.remove("open")); $("scrim").classList.remove("open"); lastFocus&&lastFocus.focus&&lastFocus.focus(); }
+
+/* ---------- events ---------- */
+document.addEventListener("click", e=>{
+  const t=e.target.closest("[data-cine],[data-day],[data-film],[data-city],[data-pick],[data-f],[data-close]"); if(!t) return;
+  if(t.dataset.close!==undefined) return closeSheets();
+  if(t.dataset.cine){ state.cine=t.dataset.cine; state.day=null; render(); }
+  else if(t.dataset.day){ state.day=t.dataset.day; render(); }
+  else if(t.dataset.film){ openFilm(t.dataset.film); }
+  else if(t.dataset.city){ const c=CITIES.find(x=>x.name===t.dataset.city); setLoc({kind:"city",name:c.name,lat:c.lat,lng:c.lng}); }
+  else if(t.dataset.pick){ const c=DATA.cinemas.find(x=>x.id===t.dataset.pick); state.loc={kind:"city",name:c.city,lat:c.lat,lng:c.lng}; store.set("loc",state.loc); state.cine=c.id; state.day=null; closeSheets(); render(); }
+  else if(t.dataset.f){ state.f[t.dataset.f]=!state.f[t.dataset.f]; t.setAttribute("aria-pressed",state.f[t.dataset.f]); render(); }
+});
+$("scrim").onclick=closeSheets;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheets(); });
+$("locBtn").onclick=()=>{ $("locSearch").value=""; renderLocList(); openSheet("locSheet"); };
+$("locSearch").oninput=e=>renderLocList(e.target.value);
+$("sortSoon").onclick=()=>{state.sort="soon";$("sortSoon").setAttribute("aria-pressed",true);$("sortBest").setAttribute("aria-pressed",false);render();};
+$("sortBest").onclick=()=>{state.sort="best";$("sortBest").setAttribute("aria-pressed",true);$("sortSoon").setAttribute("aria-pressed",false);render();};
+function locate(silent){
+  const st=$("gpsState");
+  if(!navigator.geolocation){ st.textContent="Localisation indisponible ici : choisis une ville ci-dessous."; return; }
+  st.textContent="Recherche de ta position…";
+  let done=false; const fail=()=>{ if(done) return; done=true; st.textContent="Position refusée ou introuvable. Autorise la localisation pour ce site, ou choisis ta ville ci-dessous."; };
+  setTimeout(fail,8000);
+  try{ navigator.geolocation.getCurrentPosition(p=>{ if(done) return; done=true;
+      const here={lat:p.coords.latitude,lng:p.coords.longitude};
+      const city=CITIES.map(c=>({...c,d:km(here,c)})).sort((a,b)=>a.d-b.d)[0];
+      setLoc({kind:"gps",name: city.d<15 ? city.name : "Ma position", ...here}); }, silent?()=>{done=true}:fail, {timeout:7000,maximumAge:300000});
+  }catch(e){ fail(); }
+}
+$("gpsBtn").onclick=()=>locate(false);
+if(!store.get("loc") && navigator.geolocation) locate(true);
+
+/* clock: refresh time-dependent bits every 30 s */
+function tick(){ const d=new Date(); $("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+tick(); let lastMin=nowMin();
+setInterval(()=>{ tick(); const n=nowMin(); if(n!==lastMin){ lastMin=n; if(!document.querySelector(".sheet.open")) render(); } }, 15000);
+
+fetch("seances.json").then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(d=>{ DATA=d; render(); })
+  .catch(()=>{ $("cineName").textContent="Séances indisponibles"; $("list").innerHTML=`<div class="empty"><b>Impossible de charger les séances</b>Recharge la page dans un instant.</div>`; });
+renderTop();
+})();
+</script>
+</body>
+</html>
