@@ -482,15 +482,18 @@ $("locSearch").oninput=e=>renderLocList(e.target.value);
 $("sortSoon").onclick=()=>{state.sort="soon";$("sortSoon").setAttribute("aria-pressed",true);$("sortBest").setAttribute("aria-pressed",false);render();};
 $("sortBest").onclick=()=>{state.sort="best";$("sortBest").setAttribute("aria-pressed",true);$("sortSoon").setAttribute("aria-pressed",false);render();};
 function locate(silent){
-  const st=$("gpsState");
-  if(!navigator.geolocation){ st.textContent="Localisation indisponible ici : choisis une ville ci-dessous."; return; }
-  st.textContent="Recherche de ta position…";
-  let done=false; const fail=()=>{ if(done) return; done=true; st.textContent="Position refusée ou introuvable. Autorise la localisation pour ce site, ou choisis ta ville ci-dessous."; };
+  const st=$("gpsState"), say=t=>{ if(!silent) st.textContent=t; };
+  if(!navigator.geolocation){ say("Localisation indisponible ici : choisis une ville ci-dessous."); return; }
+  say("Recherche de ta position…");
+  let done=false; const fail=()=>{ if(done) return; done=true; say("Position refusée ou introuvable. Autorise la localisation pour ce site, ou choisis ta ville ci-dessous."); };
   setTimeout(fail,8000);
   try{ navigator.geolocation.getCurrentPosition(p=>{ if(done) return; done=true;
+      say("Utiliser la position du téléphone");
+      // the launch-time lookup never overrides a choice made meanwhile or closes an open panel
+      if(silent && (store.get("loc") || document.querySelector(".sheet.open"))) return;
       const here={lat:p.coords.latitude,lng:p.coords.longitude};
       const city=CITIES.map(c=>({...c,d:km(here,c)})).sort((a,b)=>a.d-b.d)[0];
-      setLoc({kind:"gps",name: city.d<15 ? city.name : "Ma position", ...here}); }, silent?()=>{done=true}:fail, {timeout:7000,maximumAge:300000});
+      setLoc({kind:"gps",name: city.d<15 ? city.name : "Ma position", ...here}); }, fail, {timeout:7000,maximumAge:300000});
   }catch(e){ fail(); }
 }
 $("gpsBtn").onclick=()=>locate(false);
