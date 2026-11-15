@@ -178,6 +178,11 @@ input,select,textarea{font-size:16px!important}
 .d-times .t{font-size:14px;padding:8px 10px}
 .fx{font-size:9.5px;letter-spacing:.04em;padding:2px 4px;border-radius:4px;background:var(--bg);color:var(--muted)}
 .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.pass{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line);text-decoration:none}
+.pass .pi{width:36px;height:36px;border-radius:10px;flex:none;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.pass b{display:block;font-weight:600;font-size:14px}
+.pass span{font-size:12.5px;color:var(--muted)}
+.pass .go{margin-left:auto;color:var(--muted)}
 
 @media (max-width:380px){.card{grid-template-columns:76px 1fr}.poster{width:76px}.d-top{grid-template-columns:96px 1fr}.d-top .poster{width:96px}.hero h1{font-size:24px}}
 .rotate{display:none}
@@ -255,6 +260,7 @@ const CITIES = [
 ];
 const FX = {DOLBY_CINEMA:"DOLBY", E_4DX:"4DX", ICE:"ICE", LASER:"LASER", PLF:"GRAND ÉCRAN", F_4K:"4K", LUXURY:"CONFORT", DOLBY_ATMOS:"ATMOS", IMAX:"IMAX", E_3D:"3D"};
 const KIDS = /Animation|Famille/;
+const passCulture = q => `https://passculture.app/recherche/resultats?query=${encodeURIComponent('"'+q+'"')}&offerCategories=${encodeURIComponent('["CINEMA"]')}`;
 const posterSrc = m => m.img || (m.p ? "https://fr.web.img6.acsta.net/c_215_290" + m.p : null);
 window.posterFail = img => { const d=document.createElement("div"); d.className="poster ph"; d.textContent=img.alt ? img.alt[0] : "?"; img.replaceWith(d); };
 const $ = id => document.getElementById(id);
@@ -338,7 +344,8 @@ function renderHero(){
   const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name+" "+c.town)}`;
   $("cineActions").innerHTML = `<a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
-    <a class="btn" href="${maps}" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-8-8 18-2-8z"/></svg>Itinéraire</a>`;
+    <a class="btn" href="${maps}" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-8-8 18-2-8z"/></svg>Itinéraire</a>
+    <a class="btn" href="${passCulture(c.name)}" target="_blank" rel="noopener">pass Culture</a>`;
   $("cineStrip").innerHTML = list.slice(0,8).map(x=>`<button class="chip" data-cine="${x.id}" aria-pressed="${x.id===c.id}">${esc(x.name)} <small>${fmtKm(x.dist)}</small></button>`).join("");
   return c;
 }
@@ -382,7 +389,7 @@ function renderList(c){
     $("list").innerHTML = `<div class="empty"><b>${any? "Plus rien ce jour-là" : "Pas de séance"}</b>${any && isToday ? "Les séances d'aujourd'hui sont passées ou ne correspondent pas aux filtres. Regarde demain." : "Essaie un autre jour, un autre cinéma ou enlève un filtre."}</div>`;
   } else $("list").innerHTML = items.map(card).join("");
   const up = new Date(DATA.updated);
-  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version 7 · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
+  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version 8 · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
 }
 function render(){ if(!DATA) return;
   const keep=["cineStrip","days"].map(id=>[id,$(id).scrollLeft]);
@@ -424,7 +431,12 @@ function openFilm(id){
       <a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver une place</a>
       <a class="btn" href="https://www.allocine.fr/film/fichefilm_gen_cfilm=${id}.html" target="_blank" rel="noopener">Critiques complètes</a>
       <a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(m.t+" bande annonce")}" target="_blank" rel="noopener">Bande-annonce</a>
-    </div>`;
+    </div>
+    <a class="pass" href="${passCulture(m.t)}" target="_blank" rel="noopener">
+      <span class="pi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg></span>
+      <span><b>Tu as entre 15 et 21 ans ?</b><span>Réserve ce film avec ton pass Culture</span></span>
+      <svg class="go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+    </a>`;
   $("filmBody").scrollTop=0; openSheet("filmSheet");
 }
 
