@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="description" content="Le cinéma le plus proche, ses séances en temps réel, les notes presse et spectateurs et un conseil pour chaque film.">
 <meta name="theme-color" content="#0d0e17">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -42,7 +42,11 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html,body{background:var(--bg)}
+html,body{background:var(--bg);overflow-x:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body,button,a{-webkit-tap-highlight-color:transparent}
+button,a,.chip,.day,.card,.loc{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+img{-webkit-user-drag:none;-webkit-touch-callout:none}
+body.locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 body{margin:0;color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
@@ -72,7 +76,7 @@ a{color:inherit}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:12px;font-weight:600;font-size:13.5px;text-decoration:none;background:var(--bg);border:1px solid var(--line)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 
-.cine-strip{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 2px;margin:0 -2px;scrollbar-width:none}
+.cine-strip{overscroll-behavior-x:contain;display:flex;gap:8px;overflow-x:auto;padding:12px 2px 2px;margin:0 -2px;scrollbar-width:none}
 .cine-strip::-webkit-scrollbar{display:none}
 .chip{flex:none;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:500;white-space:nowrap;display:flex;gap:6px;align-items:center}
 .chip small{color:var(--muted);font-family:var(--f-mono);font-size:11px}
@@ -80,7 +84,7 @@ a{color:inherit}
 .chip[aria-pressed="true"] small{color:inherit;opacity:.7}
 
 /* days + tools */
-.days{display:flex;gap:8px;margin-top:18px;overflow-x:auto;scrollbar-width:none}
+.days{overscroll-behavior-x:contain;display:flex;gap:8px;margin-top:18px;overflow-x:auto;scrollbar-width:none}
 .days::-webkit-scrollbar{display:none}
 .day{flex:none;min-width:64px;padding:8px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:center}
 .day b{display:block;font-family:var(--f-display);font-size:15px}
@@ -100,7 +104,8 @@ a{color:inherit}
 .list{display:flex;flex-direction:column;gap:12px}
 .card{display:grid;grid-template-columns:92px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:12px;text-align:left;width:100%;transition:transform .15s ease,border-color .15s}
 .card:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
-.card:active{transform:scale(.99)}
+.card:active{background:var(--surface-2)}
+.chip:active,.day:active,.btn:active{opacity:.75}
 .poster{width:92px;aspect-ratio:3/4;border-radius:12px;object-fit:cover;background:var(--surface-2);display:block;max-width:100%}
 .poster.ph{display:grid;place-items:center;font-family:var(--f-display);font-size:28px;color:var(--muted)}
 .c-body{min-width:0;display:flex;flex-direction:column;gap:6px}
@@ -125,16 +130,19 @@ a{color:inherit}
 .foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
 
 /* sheets */
-.scrim{position:fixed;inset:0;background:rgba(5,5,12,.55);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim{touch-action:none;position:fixed;inset:0;background:rgba(5,5,12,.55);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
 .scrim.open{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:560px;margin:0 auto;background:var(--surface);border-radius:24px 24px 0 0;max-height:88%;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:560px;margin:0 auto;background:var(--surface);border-radius:24px 24px 0 0;max-height:88%;max-height:88dvh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow);padding-bottom:env(safe-area-inset-bottom,0px)}
 .sheet.open{transform:none}
+.sheet.dragging{transition:none}
+#locSheet{height:88%;height:88dvh}
+.sheet-head,.grab{touch-action:none;cursor:grab}
 .grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:10px auto 4px;flex:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px max(18px,env(safe-area-inset-right,0px)) 10px max(18px,env(safe-area-inset-left,0px))}
 .sheet-head h3{font-family:var(--f-display);font-size:21px;margin:0}
 .x{width:34px;height:34px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;flex:none}
-.sheet-body{overflow-y:auto;padding:0 max(18px,env(safe-area-inset-right,0px)) 22px max(18px,env(safe-area-inset-left,0px))}
-.search{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;outline:none}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1;min-height:0;padding:0 max(18px,env(safe-area-inset-right,0px)) 22px max(18px,env(safe-area-inset-left,0px))}
+.search{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:16px;outline:none;-webkit-appearance:none;appearance:none}
 .search-wrap{position:relative}
 .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
 .row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left}
@@ -170,6 +178,8 @@ a{color:inherit}
 .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
 
 @media (max-width:380px){.card{grid-template-columns:76px 1fr}.poster{width:76px}.d-top{grid-template-columns:96px 1fr}.d-top .poster{width:96px}.hero h1{font-size:24px}}
+.rotate{display:none}
+@media (orientation: landscape) and (max-height: 500px){.rotate{display:flex;position:fixed;inset:0;z-index:50;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;font-family:var(--f-display);font-size:18px}.rotate img{width:64px;height:64px;border-radius:15px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
@@ -211,6 +221,7 @@ a{color:inherit}
   <p class="foot" id="foot"></p>
 </div>
 
+<div class="rotate" aria-hidden="true"><img src="icon.svg" alt="">Tourne ton téléphone à la verticale</div>
 <div class="scrim" id="scrim"></div>
 
 <section class="sheet" id="locSheet" role="dialog" aria-modal="true" aria-labelledby="locTitle">
@@ -369,7 +380,10 @@ function renderList(c){
   const up = new Date(DATA.updated);
   $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
 }
-function render(){ if(!DATA) return; renderTop(); const c=renderHero(); renderDays(c); renderList(c); }
+function render(){ if(!DATA) return;
+  const keep=["cineStrip","days"].map(id=>[id,$(id).scrollLeft]);
+  renderTop(); const c=renderHero(); renderDays(c); renderList(c);
+  keep.forEach(([id,x])=>{ $(id).scrollLeft=x; }); }
 
 /* ---------- film sheet ---------- */
 function openFilm(id){
@@ -431,9 +445,24 @@ function renderLocList(q=""){
 function setLoc(loc){ state.loc=loc; state.cine=null; state.day=null; store.set("loc",loc); closeSheets(); render(); }
 
 /* ---------- sheets ---------- */
-let lastFocus=null;
-function openSheet(id){ lastFocus=document.activeElement; $("scrim").classList.add("open"); $(id).classList.add("open"); setTimeout(()=>$(id).querySelector("[data-close]").focus(),50); }
-function closeSheets(){ document.querySelectorAll(".sheet.open").forEach(s=>s.classList.remove("open")); $("scrim").classList.remove("open"); lastFocus&&lastFocus.focus&&lastFocus.focus(); }
+let lastFocus=null, lockY=0;
+function lockPage(){ if(document.body.classList.contains("locked")) return; lockY=window.scrollY; document.body.style.top=`-${lockY}px`; document.body.classList.add("locked"); }
+function unlockPage(){ if(!document.body.classList.contains("locked")) return; document.body.classList.remove("locked"); document.body.style.top=""; window.scrollTo(0,lockY); }
+function openSheet(id){ lastFocus=document.activeElement; lockPage(); $("scrim").classList.add("open"); const s=$(id); s.style.transform=""; s.classList.add("open"); }
+function closeSheets(){ const open=document.querySelectorAll(".sheet.open"); if(!open.length) return;
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  open.forEach(s=>{s.classList.remove("open"); s.style.transform="";}); $("scrim").classList.remove("open"); unlockPage();
+  if(lastFocus && lastFocus.focus) try{ lastFocus.focus({preventScroll:true}); }catch(e){} }
+/* swipe a panel down to close it, like a native sheet */
+document.querySelectorAll(".sheet").forEach(s=>{
+  let y0=null, dy=0;
+  const start=e=>{ const body=s.querySelector(".sheet-body"); if(e.target.closest(".sheet-body") && body.scrollTop>0) return; if(e.target.closest("input,button,a")) return; y0=e.touches[0].clientY; dy=0; s.classList.add("dragging"); };
+  const move=e=>{ if(y0==null) return; dy=Math.max(0,e.touches[0].clientY-y0); if(dy>0){ s.style.transform=`translateY(${dy}px)`; if(e.cancelable) e.preventDefault(); } };
+  const end=()=>{ if(y0==null) return; s.classList.remove("dragging"); y0=null; if(dy>90) closeSheets(); else s.style.transform=""; };
+  s.addEventListener("touchstart",start,{passive:true}); s.addEventListener("touchmove",move,{passive:false}); s.addEventListener("touchend",end); s.addEventListener("touchcancel",end);
+});
+/* nothing behind an open panel can scroll */
+$("scrim").addEventListener("touchmove",e=>{ if(e.cancelable) e.preventDefault(); },{passive:false});
 
 /* ---------- events ---------- */
 document.addEventListener("click", e=>{
