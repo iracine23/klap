@@ -56,7 +56,7 @@ a{color:inherit}
 .app{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
 
 /* top bar */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;padding-block:14px 10px}
+.top{position:relative;z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;padding-block:14px 10px}
 .brand{width:38px;height:38px;flex:none;display:block;border-radius:10px}
 .loc{display:flex;align-items:center;gap:10px;min-width:0;flex:1;text-align:left}
 .loc-ico{width:38px;height:38px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;flex:none;color:var(--accent)}
@@ -382,7 +382,7 @@ function renderList(c){
     $("list").innerHTML = `<div class="empty"><b>${any? "Plus rien ce jour-là" : "Pas de séance"}</b>${any && isToday ? "Les séances d'aujourd'hui sont passées ou ne correspondent pas aux filtres. Regarde demain." : "Essaie un autre jour, un autre cinéma ou enlève un filtre."}</div>`;
   } else $("list").innerHTML = items.map(card).join("");
   const up = new Date(DATA.updated);
-  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version 6 · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
+  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version 7 · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
 }
 function render(){ if(!DATA) return;
   const keep=["cineStrip","days"].map(id=>[id,$(id).scrollLeft]);
