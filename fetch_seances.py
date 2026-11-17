@@ -12,7 +12,7 @@ ZONES = {"22", "29", "35", "56",            # Bretagne
          "44", "33",                        # Nantes, Bordeaux
          "75", "92", "93", "94",            # Paris et petite couronne
          "69", "13", "31", "59", "34", "67", "06"}  # Lyon, Marseille, Toulouse, Lille, Montpellier, Strasbourg, Nice
-RATE = 1.0          # requêtes par seconde, au maximum (au-delà, AlloCiné bloque)
+RATE = 0.5          # requêtes par seconde, au maximum (au-delà, AlloCiné bloque)
 _lock, _next = threading.Lock(), [0.0]
 
 

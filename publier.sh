@@ -15,10 +15,10 @@ fi
 n=$(ls data/*.json 2>/dev/null | wc -l | tr -d ' ')
 [ "$n" -gt 0 ] || { echo "Pas de données : rien publié"; exit 1; }
 OUT=$(mktemp -d)
-cp index.html manifest.webmanifest icon.svg icon-180.png icon-512.png favicon-32.png cinemas.json "$OUT"/
-cp -R data "$OUT"/data
+# tout le site public, sans les scripts ni l'historique
+rsync -a --exclude '.git' --exclude '*.py' --exclude '*.sh' --exclude 'README.md' --exclude '__pycache__' --exclude '.gitignore' ./ "$OUT"/
 touch "$OUT/.nojekyll"
-EMAIL=$(git config user.email); NAME=$(git config user.name)
+NAME="Klap"; EMAIL="klap-bot@users.noreply.github.com"  # identité neutre pour la branche publiée
 (
   cd "$OUT"
   git init -q -b gh-pages
