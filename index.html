@@ -151,7 +151,7 @@ a{color:inherit}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:560px;margin:0 auto;background:var(--surface);border-radius:24px 24px 0 0;max-height:88%;max-height:88dvh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow);padding-bottom:env(safe-area-inset-bottom,0px)}
 .sheet.open{transform:none}
 .sheet.dragging{transition:none}
-#locSheet{height:88%;height:88dvh}
+#locSheet,#searchSheet{height:88%;height:88dvh}
 .sheet-head,.grab{touch-action:none;cursor:grab}
 .grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:10px auto 4px;flex:none}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px max(18px,env(safe-area-inset-right,0px)) 10px max(18px,env(safe-area-inset-left,0px))}
@@ -246,6 +246,20 @@ input,select,textarea{font-size:16px!important}
 .stat span{font-size:12px;color:var(--muted)}
 .chip.off{opacity:.5}
 .loading{color:var(--muted)}
+.fsearch{display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;margin:2px 0 10px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:15px;text-align:left}
+.fsearch svg{color:var(--accent)}
+.fres{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;padding:10px 2px;border-bottom:1px solid var(--line);text-align:left}
+.fres:last-child{border-bottom:0}
+.fres .poster{width:44px;border-radius:8px}
+.fres .poster.ph{font-size:16px}
+.fres b{display:block;font-family:var(--f-display);font-weight:700;font-size:15.5px;line-height:1.2}
+.fres span{font-size:12.5px;color:var(--muted)}
+.fres .nx{font-weight:800;font-size:12.5px;color:var(--accent);text-align:right;white-space:nowrap}
+.fres .km{font-family:var(--f-mono);font-weight:800;font-size:12px;color:var(--muted);text-align:right}
+.fhead{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;margin:4px 0 6px}
+.fhead .poster{width:56px;border-radius:9px}
+.fhead b{font-family:var(--f-display);font-weight:800;font-size:19px;line-height:1.15;display:block}
+.back{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:13.5px;color:var(--accent);margin:6px 0 8px}
 .alert{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:12px 14px;border-radius:16px;text-align:left;background:color-mix(in srgb,var(--bad) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--bad) 35%,transparent);color:var(--fg)}
 .alert .ai{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;background:var(--bad);color:#fff}
 .alert b{display:block;font-weight:800;font-size:14px}
@@ -355,6 +369,7 @@ input,select,textarea{font-size:16px!important}
         <span class="loc-name"><span id="locName">Rennes</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
     </button>
 
+  <button class="fsearch" id="filmSearchBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Chercher un film…</button>
   <section class="hero" id="hero">
     <div class="eyebrow" id="heroEyebrow">Cinéma le plus proche</div>
     <h1 id="cineName">Recherche des cinémas…</h1>
@@ -420,6 +435,16 @@ input,select,textarea{font-size:16px!important}
   </div>
 </section>
 
+<section class="sheet" id="searchSheet" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+  <div class="grab"></div>
+  <div class="sheet-head"><h3 id="searchTitle">Chercher un film</h3><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <div class="search-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="search" id="filmQ" type="search" placeholder="Dune, Scrooge, Le Corset…" autocomplete="off" enterkeyhint="search"></div>
+    <div id="filmRes"></div>
+  </div>
+</section>
+
 <section class="sheet" id="filmSheet" role="dialog" aria-modal="true" aria-label="Fiche du film">
   <div class="grab"></div>
   <div class="sheet-head"><span class="eyebrow" id="filmCine"></span><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
@@ -428,7 +453,7 @@ input,select,textarea{font-size:16px!important}
 
 <script>
 (() => {
-const VERSION = 13;
+const VERSION = 14;
 const QUICK = [["Paris",48.8566,2.3522],["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698],["Toulouse",43.6047,1.4442],["Bordeaux",44.8378,-0.5792],["Nantes",47.2184,-1.5536],["Lille",50.6292,3.0573],["Rennes",48.1113,-1.68]];
 const FX = {DOLBY_CINEMA:"DOLBY", E_4DX:"4DX", ICE:"ICE", LASER:"LASER", PLF:"GRAND ÉCRAN", F_4K:"4K", LUXURY:"CONFORT", DOLBY_ATMOS:"ATMOS", IMAX:"IMAX", E_3D:"3D"};
 const KIDS = /Animation|Famille/;
@@ -704,8 +729,8 @@ function filmActions(id){
 }
 function openFilm(id, ctx){
   const cid = (ctx&&ctx.cine) || state.cine, day = (ctx&&ctx.day) || state.day;
-  const c = DATA && DATA.cinemas.find(x=>x.id===cid);
-  const m = (DATA && DATA.movies[id]) || (WATCH[id]&&WATCH[id].m) || (SEEN[id]&&SEEN[id].m);
+  const c = (DATA && DATA.cinemas.find(x=>x.id===cid)) || cineObj(cid);
+  const m = getMovie(id);
   if(!m) return;
   FILM={id, m}; const v=verdict(m);
   const isToday=day===isoDay(new Date()), nm=nowMin();
@@ -769,6 +794,49 @@ function toggleSeen(id){
 }
 function rate(id,n){ if(!SEEN[id]) return; SEEN[id].rating = SEEN[id].rating===n ? 0 : n; store.set("seen",SEEN); refreshFilmActs(); renderSeen(); if(state.tab==="Show") renderShow(); }
 
+/* ---------- « Chercher un film » : every cinema that shows it, nearest first ---------- */
+let FILMS=null;
+function getFilms(){ if(!FILMS) FILMS=fetch("data/films.json").then(r=>r.ok?r.json():{}).catch(()=>({})); return FILMS; }
+function getMovie(id){
+  if(DATA && DATA.movies[id]) return DATA.movies[id];
+  for(const d of Object.values(DEP)) if(d && d.movies && d.movies[id]) return d.movies[id];
+  return (WATCH[id]&&WATCH[id].m) || (SEEN[id]&&SEEN[id].m) || (FILMS_SYNC && FILMS_SYNC[id]) || null;
+}
+let FILMS_SYNC=null;
+function cineObj(cid){
+  const x=INDEX && INDEX.find(c=>c.id===cid); if(!x) return null;
+  return {...x, dist:km(state.loc,x), days:(DEP[x.dep] && DEP[x.dep].cinemas[cid]) || {}};
+}
+function nextIn(c, id){
+  const today=isoDay(new Date()), nm=nowMin();
+  for(const d of Object.keys(c.days).sort()){ if(d<today) continue; const ss=c.days[d][id]; if(!ss) continue;
+    const s=ss.find(s=>d!==today || toMin(s.h)>=nm-5); if(s) return {d,s}; }
+  return null;
+}
+async function searchFilms(q){
+  const films = FILMS_SYNC = await getFilms(); const qq=norm(q.trim());
+  if(qq.length<2){ $("filmRes").innerHTML = `<div class="note">Tape au moins 2 lettres du titre. Klap cherche dans tous les cinémas couverts, même loin de chez toi.</div>`; return; }
+  const near = c => INDEX ? Math.min(...c.map(id=>{ const x=INDEX.find(k=>k.id===id); return x?km(state.loc,x):1e9; })) : null;
+  const hits = Object.entries(films).filter(([,f])=>norm(f.t).includes(qq) || norm(f.ot).includes(qq))
+    .map(([id,f])=>({id,f,starts:norm(f.t).startsWith(qq),d:near(f.cs)}))
+    .sort((a,b)=>(b.starts-a.starts) || (a.d-b.d)).slice(0,25);
+  if(!hits.length){ $("filmRes").innerHTML = `<div class="note">Aucun film « ${esc(q)} » à l'affiche dans les cinémas couverts en ce moment. Vérifie l'orthographe ou essaie un autre mot du titre.</div>`; return; }
+  $("filmRes").innerHTML = `<div class="group-label">Films</div>` + hits.map(({id,f,d})=>`<button class="fres" data-fpick="${id}">${posterImg(f)}<span><b>${esc(f.t)}</b><span>${f.cs.length} cinéma${f.cs.length>1?"s":""}${d!=null&&d<1e9?` · le plus proche à ${fmtKm(d)}`:""}</span></span><span class="km">›</span></button>`).join("");
+}
+async function showFilmCinemas(id){
+  const films = await getFilms(); const f=films[id]; if(!f) return;
+  const list = f.cs.map(cid=>INDEX.find(c=>c.id===cid)).filter(Boolean).map(c=>({...c, dist:km(state.loc,c)})).sort((a,b)=>a.dist-b.dist).slice(0,25);
+  const head = `<button class="back" data-fback>‹ Autres films</button><div class="fhead">${posterImg(f)}<div><b>${esc(f.t)}</b><span class="mini-s">${list.length} cinéma${list.length>1?"s":""}, du plus proche au plus loin</span></div></div>`;
+  $("filmRes").innerHTML = head + `<div class="note loading">Recherche des prochaines séances…</div>`;
+  await Promise.all([...new Set(list.slice(0,10).map(c=>c.dep))].map(getDep));
+  $("filmRes").innerHTML = head + list.map(c=>{
+    const cc={...c, days:(DEP[c.dep]&&DEP[c.dep].cinemas[c.id])||{}}; const n=nextIn(cc,id); const l=n&&dayLabel(n.d);
+    return `<button class="fres" data-fcine="${c.id}" data-fid="${id}" ${n?`data-fday="${n.d}"`:""}><span class="ico" style="width:44px;height:44px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;color:var(--accent)">${ICON.film}</span>
+      <span><b>${esc(c.name)}</b><span>${esc(c.town)} · ${fmtKm(c.dist)}</span></span>
+      <span class="nx">${n?`${l.top} ${n.s.h}${n.s.v==="VO"?" VO":""}`:"Voir ›"}</span></button>`;
+  }).join("");
+}
+
 /* ---------- location sheet: any town in France ---------- */
 let PLACES=[], searchTimer=null, searchSeq=0;
 function renderLocList(q=""){
@@ -801,7 +869,7 @@ function searchPlaces(q){
 }
 function remember(p){ const r=(store.get("recent")||[]).filter(x=>x.name!==p.name); r.unshift({name:p.name,ctx:p.ctx||"",lat:p.lat,lng:p.lng}); store.set("recent",r.slice(0,4)); }
 async function setLoc(loc, cine){
-  state.loc=loc; state.cine=cine||null; state.day=null; store.set("loc",loc); closeSheets(); renderTop();
+  state.loc=loc; state.cine=cine||null; state.day=null; store.set("loc",loc); closeSheets(true); renderTop();
   $("cineName").textContent="Recherche des cinémas…"; $("cineMeta").innerHTML=""; $("cineActions").innerHTML="";
   await loadNearby(); renderAll();
 }
@@ -811,9 +879,13 @@ let lastFocus=null;
 function lockPage(){ $("scroller").classList.add("locked"); }
 function unlockPage(){ $("scroller").classList.remove("locked"); }
 function openSheet(id){ lastFocus=document.activeElement; lockPage(); $("scrim").classList.add("open"); const s=$(id); s.style.transform=""; s.classList.add("open"); }
-function closeSheets(){ const open=document.querySelectorAll(".sheet.open"); if(!open.length) return;
+/* closes the top panel only (a film opened from the search goes back to the results); closeSheets(true) closes them all */
+function closeSheets(all){ const open=[...document.querySelectorAll(".sheet.open")]; if(!open.length) return;
   if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  open.forEach(s=>{s.classList.remove("open"); s.style.transform="";}); $("scrim").classList.remove("open"); unlockPage(); FILM=null;
+  const shut = all===true ? open : [open[open.length-1]];
+  shut.forEach(s=>{s.classList.remove("open"); s.style.transform=""; if(s.id==="filmSheet") FILM=null;});
+  if(shut.length<open.length) return;
+  $("scrim").classList.remove("open"); unlockPage();
   if(lastFocus && lastFocus.focus) try{ lastFocus.focus({preventScroll:true}); }catch(e){} }
 document.querySelectorAll(".sheet").forEach(s=>{
   let y0=null, dy=0;
@@ -842,6 +914,12 @@ $("scrim").addEventListener("touchmove",e=>{ if(e.cancelable) e.preventDefault()
 
 /* ---------- events ---------- */
 document.addEventListener("click", e=>{
+  const fs=e.target.closest("[data-fpick],[data-fback],[data-fcine]");
+  if(fs){ const d=fs.dataset;
+    if(d.fpick) return showFilmCinemas(d.fpick);
+    if(d.fback!==undefined) return searchFilms($("filmQ").value);
+    if(d.fcine){ const go=()=>openFilm(d.fid,{cine:d.fcine, day:d.fday});
+      const c=cineObj(d.fcine); return c ? getDep(c.dep).then(go) : go(); } }
   const t=e.target.closest("[data-rate],[data-unwatch],[data-unseen],[data-watch],[data-seen],[data-tab],[data-cine],[data-day],[data-film],[data-place],[data-quick],[data-recent],[data-pick],[data-f],[data-close]"); if(!t) return;
   const d=t.dataset;
   if(d.close!==undefined) return closeSheets();
@@ -860,10 +938,14 @@ document.addEventListener("click", e=>{
   else if(d.pick){ const c=INDEX.find(x=>x.id===d.pick); remember({name:c.town,ctx:c.name,lat:c.lat,lng:c.lng}); setLoc({kind:"city",name:c.town||c.name,lat:c.lat,lng:c.lng}, c.id); }
   else if(d.f){ state.f[d.f]=!state.f[d.f]; t.setAttribute("aria-pressed",state.f[d.f]); renderShow(); }
 });
-$("scrim").onclick=closeSheets;
+$("scrim").onclick=()=>closeSheets();
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheets(); if(e.key==="Enter" && e.target.matches(".mini")) e.target.click(); });
 $("locBtn").onclick=()=>{ $("locSearch").value=""; PLACES=[]; renderLocList(); openSheet("locSheet"); };
 $("locSearch").oninput=e=>searchPlaces(e.target.value);
+let fTimer=null;
+$("filmSearchBtn").onclick=()=>{ $("filmQ").value=""; searchFilms(""); openSheet("searchSheet"); getFilms(); };
+$("filmQ").oninput=e=>{ clearTimeout(fTimer); const v=e.target.value; fTimer=setTimeout(()=>searchFilms(v),120); };
+$("filmQ").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); } };
 $("locSearch").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); } };
 $("endAlert").onclick=()=>{ state.f.ending=!state.f.ending; const ch=document.querySelector('[data-f="ending"]'); if(ch) ch.setAttribute("aria-pressed",state.f.ending); state.day=null; renderShow(); };
 $("sortSoon").onclick=()=>{state.sort="soon";$("sortSoon").setAttribute("aria-pressed",true);$("sortBest").setAttribute("aria-pressed",false);renderShow();};

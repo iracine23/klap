@@ -117,12 +117,43 @@ def theater(c, days):
     return c, sched, movies, ok
 
 
+def build_index():
+    """data/films.json : pour chaque film, les salles qui le passent (sert à « Chercher un film »)."""
+    today = datetime.date.today().isoformat()
+    films = {}
+    for name in sorted(os.listdir("data")):
+        if not name.endswith(".json") or name == "films.json":
+            continue
+        try:
+            d = json.load(open(os.path.join("data", name), encoding="utf-8"))
+        except Exception:
+            continue
+        for cid, sched in d.get("cinemas", {}).items():
+            for day, mv in sched.items():
+                if day < today:
+                    continue
+                for mid in mv:
+                    m = d["movies"].get(mid)
+                    if not m:
+                        continue
+                    e = films.setdefault(mid, {"t": m.get("t"), "ot": m.get("ot"), "p": m.get("p"), "rt": m.get("rt"),
+                                               "g": m.get("g"), "u": m.get("u"), "pr": m.get("pr"), "cs": []})
+                    if cid not in e["cs"]:
+                        e["cs"].append(cid)
+    with open("data/films.json", "w", encoding="utf-8") as fh:
+        json.dump(films, fh, ensure_ascii=False, separators=(",", ":"))
+    print(f"index : {len(films)} films -> data/films.json")
+
+
 def main():
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--jours", type=int, default=7, help="nombre de jours à récupérer à partir d'aujourd'hui")
+    ap.add_argument("--index-seulement", action="store_true", help="refaire seulement data/films.json")
     ap.add_argument("--toute-la-france", action="store_true", help="toutes les salles (très long : AlloCiné limite le rythme)")
     a = ap.parse_args()
+    if a.index_seulement:
+        return build_index()
     today = datetime.date.today()
     days = [(today + datetime.timedelta(i)).isoformat() for i in range(a.jours)]
     cinemas = json.load(open("cinemas.json", encoding="utf-8"))
@@ -171,8 +202,9 @@ def main():
             json.dump({"updated": updated, "days": all_days, **v}, f, ensure_ascii=False, separators=(",", ":"))
     known = {c["dep"] for c in json.load(open("cinemas.json", encoding="utf-8"))}
     for name in os.listdir("data"):  # départements qui n'existent plus dans cinemas.json
-        if name.endswith(".json") and name[:-5] not in known:
+        if name.endswith(".json") and name != "films.json" and name[:-5] not in known:
             os.remove(os.path.join("data", name))
+    build_index()
     n_cin = sum(len(v["cinemas"]) for v in by_dep.values())
     n_mov = len({m for v in by_dep.values() for m in v["movies"]})
     print(f"{n_cin} cinémas avec séances sur {len(cinemas)}, {n_mov} films, {n_ses} séances, "
