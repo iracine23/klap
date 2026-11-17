@@ -1,9 +1,13 @@
 # Klap
 
-Le cinéma le plus proche de toi, ses séances qui suivent l'heure, les notes presse et spectateurs d'AlloCiné et un conseil pour chaque film.
+Le cinéma le plus proche de toi, partout en France : séances qui suivent l'heure, notes presse et spectateurs d'AlloCiné, un conseil pour chaque film, une liste « À voir » et l'historique des films vus avec ta note.
 
-- **Position** : le site demande ta localisation ; tu peux aussi choisir une ville ou un cinéma (bouton en haut).
-- **Mise à jour** : une GitHub Action relance `fetch_seances.py` trois fois par jour et met à jour `seances.json`.
-- **Ajouter un cinéma** : ajoute son identifiant AlloCiné (le `P0091` de `salle_gen_csalle=P0091.html`) dans `CINEMAS`, en haut de `fetch_seances.py`, puis la ville dans `CITIES`, dans `index.html`.
+## Comment ça marche
 
-Données : AlloCiné. Projet personnel, sans lien avec AlloCiné.
+- `cinemas.json` : toutes les salles AlloCiné de France (≈ 2 400) avec leurs coordonnées. Reconstruit par `build_cinemas.py` (à relancer de temps en temps).
+- `fetch_seances.py` : récupère les séances des 3 prochains jours pour toutes les salles et écrit un fichier par département dans `data/`.
+- `publier.sh` : lance la récupération puis publie le site sur la branche `gh-pages` (une seule version gardée, pour que le dépôt reste léger).
+- L'appli ne charge que les départements autour de ta position.
+- « À voir » et « Déjà vus » restent sur ton téléphone (aucun compte, rien n'est envoyé).
+
+Données : AlloCiné. Coordonnées et recherche de ville : Base Adresse Nationale. Projet personnel, sans lien avec AlloCiné.

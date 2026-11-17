@@ -1,45 +1,51 @@
 #!/usr/bin/env python3
-"""Récupère les séances AlloCiné des cinémas suivis et écrit seances.json.
+"""Récupère les séances AlloCiné de toutes les salles de cinemas.json.
 
-Usage : python3 fetch_seances.py [nb_jours]   (défaut : 4 jours à partir d'aujourd'hui)
+Écrit un fichier par département : data/<dep>.json (films + séances des salles du département).
+Seules les zones de ZONES sont récupérées, à un rythme raisonnable pour ne pas être bloqué par AlloCiné.
+Usage : python3 fetch_seances.py [nb_jours]   (défaut : 3 jours à partir d'aujourd'hui)
 """
-import json, re, sys, html, base64, datetime, urllib.request, concurrent.futures as cf
+import json, os, re, sys, time, threading, datetime, urllib.error, urllib.request, concurrent.futures as cf
 
-# id AlloCiné -> (ville affichée, lat, lng, adresse)
-CINEMAS = {
-    "P0091": ("Rennes", 48.10915, -1.68390, "12 quai Duguay-Trouin"),
-    "P0084": ("Rennes", 48.10370, -1.67270, "11 rue de Châtillon"),
-    "P0102": ("Rennes", 48.10600, -1.67120, "1 rue Saint-Hélier"),
-    "P4093": ("Rennes", 48.21500, -1.74200, "ZAC Cap Malo, La Mézière"),
-    "P0328": ("Lannion", 48.73120, -3.45870, "34 avenue du Général de Gaulle"),
-    "W3321": ("Langon", 44.55250, -0.24930, "Langon"),
-    "P0280": ("Saint-Malo", 48.64530, -2.00780, "Saint-Malo"),
-}
+# Départements couverts (2 premiers chiffres du code postal) + Paris.
+ZONES = {"22", "29", "35", "56",            # Bretagne
+         "44", "33",                        # Nantes, Bordeaux
+         "75", "92", "93", "94",            # Paris et petite couronne
+         "69", "13", "31", "59", "34", "67", "06"}  # Lyon, Marseille, Toulouse, Lille, Montpellier, Strasbourg, Nice
+RATE = 1.0          # requêtes par seconde, au maximum (au-delà, AlloCiné bloque)
+_lock, _next = threading.Lock(), [0.0]
+
+
+def _wait_turn():
+    with _lock:
+        now = time.time()
+        t = max(now, _next[0])
+        _next[0] = t + 1.0 / RATE
+    time.sleep(max(0, t - now))
+
 UA = {"User-Agent": "Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/130 Safari/537.36"}
 
 
-def get(url):
-    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
-        return r.read().decode("utf-8")
-
-
-def name_of(cid):
-    t = re.search(r"<title>([^<]*)", get(f"https://www.allocine.fr/seance/salle_gen_csalle={cid}.html"))
-    t = html.unescape(t.group(1)) if t else cid
-    m = re.match(r"Cinéma (.*?) à (.*?) \((\d{5})", t)
-    return (m.group(1).strip(), m.group(2).strip(), m.group(3)) if m else (t, "", "")
-
-
-def poster_data(path):
-    """Affiche miniature en data URI (le visualiseur bloque les images externes)."""
-    if not path:
-        return None
-    try:
-        with urllib.request.urlopen(urllib.request.Request(
-                "https://fr.web.img6.acsta.net/c_160_213" + path, headers=UA), timeout=30) as r:
-            return "data:image/jpeg;base64," + base64.b64encode(r.read()).decode()
-    except Exception:
-        return None
+def get(url, tries=4):
+    for i in range(tries):
+        _wait_turn()
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
+                return r.read().decode("utf-8")
+        except urllib.error.HTTPError as e:
+            if e.code == 429:  # trop de requêtes : tout le monde fait une pause
+                with _lock:
+                    _next[0] = max(_next[0], time.time() + 60)
+                if i == tries - 1:
+                    raise
+                continue
+            if i == tries - 1:
+                raise
+            time.sleep(2 + i * 3)
+        except Exception:
+            if i == tries - 1:
+                raise
+            time.sleep(2 + i * 3)
 
 
 def person(p):
@@ -49,28 +55,29 @@ def person(p):
 def movie_info(m):
     st = m.get("stats") or {}
     rel = (m.get("releases") or [{}])[0] or {}
+
     def score(k):
-        v = (st.get(k) or {})
+        v = st.get(k) or {}
         return (round(v["score"], 1) if v.get("score") else None), v.get("count")
+
     u, uc = score("userRating")
     p, pc = score("pressReview")
-    poster = (m.get("poster") or {}).get("path")
     return {
         "t": m.get("title"), "ot": m.get("originalTitle"),
-        "p": poster, "rt": m.get("runtime"),
+        "p": (m.get("poster") or {}).get("path"), "rt": m.get("runtime"),
         "g": [g["translate"] for g in (m.get("genres") or [])][:3],
         "d": ", ".join(person(c["person"]) for c in (m.get("credits") or [])
                        if (c.get("position") or {}).get("name") == "DIRECTOR"),
         "c": [person(n["actor"]) for n in ((m.get("cast") or {}).get("nodes") or []) if n.get("actor")][:3],
         "s": re.sub(r"\s+", " ", m.get("synopsis") or "").strip(),
         "u": u, "uc": uc, "pr": p, "pc": pc,
-        "rd": ((rel.get("releaseDate") or {}).get("date")),
-        "ce": ((rel.get("certificate") or {}).get("label")),
-        "id": m.get("internalId"),
+        "rd": (rel.get("releaseDate") or {}).get("date"),
+        "ce": (rel.get("certificate") or {}).get("label"),
     }
 
 
 def day(cid, d):
+    """[(movie_id, movie, [séances])] pour une salle et un jour."""
     out, page, total = [], 1, 1
     while page <= total:
         j = json.loads(get(f"https://www.allocine.fr/_/showtimes/theater-{cid}/d-{d}/p-{page}/"))
@@ -84,41 +91,92 @@ def day(cid, d):
                 for s in lst:
                     fx = [x for x in (s.get("projection") or []) if x != "DIGITAL"]
                     fx += (s.get("experience") or []) + (s.get("sound") or [])
-                    seances.append({"h": s["startsAt"][11:16],
-                                    "v": "VO" if s.get("diffusionVersion") == "ORIGINAL" else "VF",
-                                    "fx": fx})
-            seances.sort(key=lambda x: x["h"])
-            out.append((movie_info(m), seances))
+                    e = {"h": s["startsAt"][11:16], "v": "VO" if s.get("diffusionVersion") == "ORIGINAL" else "VF"}
+                    if fx:
+                        e["fx"] = fx
+                    seances.append(e)
+            if seances:
+                seances.sort(key=lambda x: x["h"])
+                out.append((str(m.get("internalId")), m, seances))
         page += 1
     return out
 
 
+def theater(c, days):
+    sched, movies, ok = {}, {}, True
+    for d in days:
+        try:
+            rows = day(c["id"], d)
+        except Exception:
+            ok = False
+            continue
+        for mid, m, ss in rows:
+            sched.setdefault(d, {})[mid] = ss
+            if mid not in movies:
+                movies[mid] = movie_info(m)
+    return c, sched, movies, ok
+
+
 def main():
-    ndays = int(sys.argv[1]) if len(sys.argv) > 1 else 4
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--jours", type=int, default=7, help="nombre de jours à récupérer à partir d'aujourd'hui")
+    ap.add_argument("--toute-la-france", action="store_true", help="toutes les salles (très long : AlloCiné limite le rythme)")
+    a = ap.parse_args()
     today = datetime.date.today()
-    days = [(today + datetime.timedelta(i)).isoformat() for i in range(ndays)]
-    movies, cinemas = {}, []
-    with cf.ThreadPoolExecutor(8) as ex:
-        names = dict(zip(CINEMAS, ex.map(name_of, CINEMAS)))
-        jobs = {(c, d): ex.submit(day, c, d) for c in CINEMAS for d in days}
-    for cid, (city, lat, lng, addr) in CINEMAS.items():
-        nm, town, cp = names[cid]
-        sched = {}
-        for d in days:
-            for info, seances in jobs[(cid, d)].result():
-                movies.setdefault(str(info["id"]), info)
-                if seances:
-                    sched.setdefault(d, {})[str(info["id"])] = seances
-        cinemas.append({"id": cid, "name": nm, "town": town, "cp": cp, "city": city,
-                        "lat": lat, "lng": lng, "addr": addr, "days": sched})
-    data = {"updated": datetime.datetime.now().isoformat(timespec="minutes"),
-            "days": days, "movies": movies, "cinemas": cinemas}
-    with open("seances.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
-    n = sum(len(v) for c in cinemas for d in c["days"].values() for v in d.values())
-    print(f"{len(cinemas)} cinémas, {len(movies)} films, {n} séances -> seances.json")
+    days = [(today + datetime.timedelta(i)).isoformat() for i in range(a.jours)]
+    cinemas = json.load(open("cinemas.json", encoding="utf-8"))
+    if not a.toute_la_france:
+        cinemas = [c for c in cinemas if c["dep"] == "paris" or (c.get("cp") or "")[:2] in ZONES]
+    print(f"{len(cinemas)} salles, {a.jours} jours", flush=True)
+    t0 = time.time()
+    old = {}  # dernières séances connues : gardées pour les jours non récupérés et si une salle ne répond pas
     for c in cinemas:
-        print(" ", c["id"], c["name"], "-", c["town"], c["cp"], "| jours:", list(c["days"]))
+        p = f"data/{c['dep']}.json"
+        if c["dep"] not in old:
+            try:
+                old[c["dep"]] = json.load(open(p, encoding="utf-8")) if os.path.exists(p) else None
+            except Exception:
+                old[c["dep"]] = None
+    by_dep, failed = {}, 0
+    with cf.ThreadPoolExecutor(2) as ex:
+        for i, (c, sched, movies, ok) in enumerate(ex.map(lambda c: theater(c, days), cinemas), 1):
+            if i % 100 == 0:
+                print(f"  {i}/{len(cinemas)} salles ({round(time.time() - t0)} s)", flush=True)
+            dep = by_dep.setdefault(c["dep"], {"movies": {}, "cinemas": {}})
+            prev = old.get(c["dep"])
+            if not ok:
+                failed += 1
+            if prev and c["id"] in prev["cinemas"]:
+                # jours pas récupérés cette fois (ou salle muette) : on garde ce qu'on savait, sans le passé
+                for d, v in prev["cinemas"][c["id"]].items():
+                    if d >= days[0] and (d not in days or not ok) and d not in sched:
+                        sched[d] = v
+                        for mid in v:
+                            if mid in prev["movies"]:
+                                movies.setdefault(mid, prev["movies"][mid])
+            if sched:
+                dep["cinemas"][c["id"]] = dict(sorted(sched.items()))
+                dep["movies"].update(movies)
+    # départements non traités cette fois : on garde leur fichier tel quel
+    if failed:
+        print(f"{failed} salles n'ont pas répondu en entier : leurs dernières séances connues sont gardées")
+    os.makedirs("data", exist_ok=True)
+    updated = datetime.datetime.now().isoformat(timespec="minutes")
+    n_ses = 0
+    for dep, v in by_dep.items():
+        n_ses += sum(len(ss) for sch in v["cinemas"].values() for d in sch.values() for ss in d.values())
+        all_days = sorted({d for sch in v["cinemas"].values() for d in sch})
+        with open(f"data/{dep}.json", "w", encoding="utf-8") as f:
+            json.dump({"updated": updated, "days": all_days, **v}, f, ensure_ascii=False, separators=(",", ":"))
+    known = {c["dep"] for c in json.load(open("cinemas.json", encoding="utf-8"))}
+    for name in os.listdir("data"):  # départements qui n'existent plus dans cinemas.json
+        if name.endswith(".json") and name[:-5] not in known:
+            os.remove(os.path.join("data", name))
+    n_cin = sum(len(v["cinemas"]) for v in by_dep.values())
+    n_mov = len({m for v in by_dep.values() for m in v["movies"]})
+    print(f"{n_cin} cinémas avec séances sur {len(cinemas)}, {n_mov} films, {n_ses} séances, "
+          f"{a.jours} jours -> data/ ({round(time.time() - t0)} s)")
 
 
 if __name__ == "__main__":

@@ -188,15 +188,65 @@ input,select,textarea{font-size:16px!important}
 .rotate{display:none}
 @media (orientation: landscape) and (max-height: 500px){.rotate{display:flex;position:fixed;inset:0;z-index:50;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;font-family:var(--f-display);font-size:18px}.rotate img{width:64px;height:64px;border-radius:15px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+/* ---------- v9: tabs, watchlist, history ---------- */
+#scroller{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+.view[hidden]{display:none!important}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:color-mix(in srgb,var(--surface) 94%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+.tabbar-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11.5px;font-weight:600;color:var(--muted);position:relative}
+.tab svg{width:23px;height:23px}
+.tab[aria-selected="true"]{color:var(--accent)}
+.badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:10.5px;font-weight:700;display:grid;place-items:center;font-family:var(--f-mono)}
+.badge:empty{display:none}
+.page-h{font-family:var(--f-display);font-weight:800;font-size:28px;margin:22px 0 4px;letter-spacing:-.01em}
+.page-sub{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+.mini{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:10px;width:100%;text-align:left}
+.mini .poster{width:64px;border-radius:10px}
+.mini .poster.ph{font-size:22px}
+.mini-b{min-width:0;display:flex;flex-direction:column;gap:4px}
+.mini-t{font-family:var(--f-display);font-weight:700;font-size:16px;line-height:1.15;margin:0}
+.mini-s{font-size:12.5px;color:var(--muted)}
+.mini-next{font-size:12.5px;font-weight:600;color:var(--accent)}
+.mini-none{font-size:12.5px;color:var(--muted)}
+.icon-btn{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;color:var(--muted);background:var(--surface-2)}
+.stars{display:inline-flex;gap:2px}
+.stars button{width:30px;height:30px;display:grid;place-items:center;color:var(--line)}
+.stars button.on{color:var(--accent)}
+.stars.sm button{width:22px;height:22px}
+.stars svg{width:100%;height:100%}
+.stars.sm svg{width:17px;height:17px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.act{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 10px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);font-weight:600;font-size:13.5px}
+.act svg{width:18px;height:18px}
+.act.on{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent)}
+.rate{margin-top:10px;padding:12px 14px;border-radius:16px;background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rate span{font-size:13px;color:var(--muted)}
+.marks{display:flex;gap:6px}
+.mark{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.mark.w{color:var(--accent)}
+.mark svg{width:11px;height:11px}
+.stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.stat b{display:block;font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.chip.off{opacity:.5}
+.loading{color:var(--muted)}
+.ending{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.ending::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--bad)}
+.t.last{box-shadow:inset 0 0 0 1.5px var(--bad)}
+.t.last sup.l{color:var(--bad);opacity:1}
+.info-line{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:13.5px;color:var(--muted)}
+.info-line b{color:var(--fg);font-weight:600}
+.info-line.warn{color:var(--bad)}.info-line.warn b{color:var(--bad)}
 </style>
 </head>
 <body>
 <div id="scroller">
 <div class="app">
+ <div class="view" id="viewShow">
   <header class="top">
     <img class="brand" src="icon.svg" alt="Klap" width="38" height="38">
     <button class="loc" id="locBtn" aria-haspopup="dialog">
-      <span class="loc-ico" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
       <span class="loc-txt"><span class="loc-label"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;color:var(--accent)"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="locLabel">Ma position</span></span>
         <span class="loc-name"><span id="locName">Rennes</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
     </button>
@@ -205,7 +255,7 @@ input,select,textarea{font-size:16px!important}
 
   <section class="hero" id="hero">
     <div class="eyebrow" id="heroEyebrow">Cinéma le plus proche</div>
-    <h1 id="cineName">Chargement…</h1>
+    <h1 id="cineName">Recherche des cinémas…</h1>
     <div class="hero-meta" id="cineMeta"></div>
     <div class="hero-actions" id="cineActions"></div>
   </section>
@@ -224,11 +274,34 @@ input,select,textarea{font-size:16px!important}
     <button class="chip" data-f="vo" aria-pressed="false">VO uniquement</button>
     <button class="chip" data-f="good" aria-pressed="false">Bien notés (3,5+)</button>
     <button class="chip" data-f="kids" aria-pressed="false">En famille</button>
+    <button class="chip" data-f="ending" aria-pressed="false">Bientôt plus à l'affiche</button>
   </div>
   <div class="list" id="list"></div>
   <p class="foot" id="foot"></p>
+ </div>
+
+ <div class="view" id="viewWatch" hidden>
+  <h1 class="page-h">À voir</h1>
+  <p class="page-sub" id="watchSub">Les films que tu as mis de côté, avec leur prochaine séance près de toi.</p>
+  <div class="list" id="watchList"></div>
+ </div>
+
+ <div class="view" id="viewSeen" hidden>
+  <h1 class="page-h">Déjà vus</h1>
+  <p class="page-sub">Tes films, avec ta propre note.</p>
+  <div id="seenStats"></div>
+  <div class="list" id="seenList"></div>
+ </div>
 </div>
 </div>
+
+<nav class="tabbar" aria-label="Navigation">
+  <div class="tabbar-in" role="tablist">
+    <button class="tab" role="tab" data-tab="Show" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 6l2-3M12 6l2-3M17 6l2-3"/></svg>Séances</button>
+    <button class="tab" role="tab" data-tab="Watch" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>À voir<span class="badge" id="watchBadge"></span></button>
+    <button class="tab" role="tab" data-tab="Seen" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Déjà vus</button>
+  </div>
+</nav>
 
 <div class="rotate" aria-hidden="true"><img src="icon.svg" alt="">Tourne ton téléphone à la verticale</div>
 <div class="scrim" id="scrim"></div>
@@ -238,7 +311,7 @@ input,select,textarea{font-size:16px!important}
   <div class="sheet-head"><h3 id="locTitle">Changer de position</h3><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sheet-body">
     <div class="search-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input class="search" id="locSearch" type="search" placeholder="Ville ou cinéma" autocomplete="off"></div>
+      <input class="search" id="locSearch" type="search" placeholder="Ville, code postal ou cinéma" autocomplete="off" enterkeyhint="search"></div>
     <button class="row" id="gpsBtn"><span class="ico acc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></span><span><b>Autour de moi</b><span id="gpsState">Utiliser la position du téléphone</span></span></button>
     <div id="locList"></div>
   </div>
@@ -252,22 +325,34 @@ input,select,textarea{font-size:16px!important}
 
 <script>
 (() => {
-const CITIES = [
-  {name:"Rennes", lat:48.1113, lng:-1.6800, dept:"Ille-et-Vilaine"},
-  {name:"Saint-Malo", lat:48.6493, lng:-2.0257, dept:"Ille-et-Vilaine"},
-  {name:"Lannion", lat:48.7326, lng:-3.4566, dept:"Côtes-d'Armor"},
-  {name:"Langon", lat:44.5531, lng:-0.2496, dept:"Gironde"},
-];
+const VERSION = 10;
+const QUICK = [["Paris",48.8566,2.3522],["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698],["Toulouse",43.6047,1.4442],["Bordeaux",44.8378,-0.5792],["Nantes",47.2184,-1.5536],["Lille",50.6292,3.0573],["Rennes",48.1113,-1.68]];
 const FX = {DOLBY_CINEMA:"DOLBY", E_4DX:"4DX", ICE:"ICE", LASER:"LASER", PLF:"GRAND ÉCRAN", F_4K:"4K", LUXURY:"CONFORT", DOLBY_ATMOS:"ATMOS", IMAX:"IMAX", E_3D:"3D"};
 const KIDS = /Animation|Famille/;
 const passCulture = q => `https://passculture.app/recherche/resultats?query=${encodeURIComponent('"'+q+'"')}&offerCategories=${encodeURIComponent('["CINEMA"]')}`;
-const posterSrc = m => m.img || (m.p ? "https://fr.web.img6.acsta.net/c_215_290" + m.p : null);
+const posterSrc = m => m && (m.img || (m.p ? "https://fr.web.img6.acsta.net/c_215_290" + m.p : null));
 window.posterFail = img => { const d=document.createElement("div"); d.className="poster ph"; d.textContent=img.alt ? img.alt[0] : "?"; img.replaceWith(d); };
 const $ = id => document.getElementById(id);
 const store = { get(k){try{return JSON.parse(localStorage.getItem("seance:"+k))}catch(e){return null}}, set(k,v){try{localStorage.setItem("seance:"+k,JSON.stringify(v))}catch(e){}} };
+const ICON = {
+  star:`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`,
+  save:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>`,
+  saved:`<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>`,
+  eye:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  check:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>`,
+  trash:`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`,
+  pin:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`,
+  film:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>`,
+  clock:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  ok:`<svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="m5 12 5 5 9-10"/></svg>`
+};
 
-let DATA = null;
-const state = { loc: store.get("loc") || {kind:"city", name:"Rennes", lat:48.1113, lng:-1.6800}, cine:null, day:null, sort:"soon", f:{vo:false,good:false,kids:false} };
+let INDEX = null;           // every cinema in France (cinemas.json)
+const DEP = {}, DEP_P = {};  // department showtimes, loaded on demand
+let DATA = null;            // what is on screen: nearby cinemas + their films
+let WATCH = store.get("watch") || {};   // id -> {m, added}
+let SEEN  = store.get("seen")  || {};   // id -> {m, rating, date}
+const state = { loc: store.get("loc") || {kind:"city", name:"Rennes", lat:48.1113, lng:-1.6800}, cine:null, day:null, sort:"soon", tab:"Show", f:{vo:false,good:false,kids:false,ending:false} };
 
 /* ---------- helpers ---------- */
 const pad = n => String(n).padStart(2,"0");
@@ -279,11 +364,15 @@ const nf = new Intl.NumberFormat("fr-FR");
 function km(a,b){const R=6371,r=Math.PI/180,dl=(b.lat-a.lat)*r,dg=(b.lng-a.lng)*r;const x=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 const fmtKm = d => d<1 ? `${Math.round(d*1000/10)*10} m` : `${d<10?d.toFixed(1).replace(".",","):Math.round(d)} km`;
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
 function dayLabel(iso){const t=isoDay(new Date());const tm=new Date();tm.setDate(tm.getDate()+1);
   const d=new Date(iso+"T12:00:00");
   const top = iso===t ? "Auj." : iso===isoDay(tm) ? "Demain" : d.toLocaleDateString("fr-FR",{weekday:"short"}).replace(".","");
   return {top: top[0].toUpperCase()+top.slice(1), sub: d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"}).replace(".","")};}
+const dayShort = iso => { const t=isoDay(new Date()); const tm=new Date(); tm.setDate(tm.getDate()+1); if(iso===t) return "ce soir"; if(iso===isoDay(tm)) return "demain"; return new Date(iso+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"short"}).replace(".",""); };
 function inMin(m){ if(m<60) return `dans ${m} min`; const h=Math.floor(m/60), r=m%60; return `dans ${h} h${r?" "+pad(r):""}`; }
+const posterImg = (m,cls="poster") => posterSrc(m) ? `<img class="${cls}" src="${posterSrc(m)}" alt="${esc(m.t)}" loading="lazy" referrerpolicy="no-referrer" onerror="posterFail(this)">` : `<div class="${cls} ph">${esc(((m&&m.t)||"?")[0])}</div>`;
+const starsHtml = (n, id, sm) => `<span class="stars${sm?" sm":""}">${[1,2,3,4,5].map(i=>`<button data-rate="${id}" data-n="${i}" class="${i<=n?"on":""}" aria-label="${i} sur 5">${ICON.star}</button>`).join("")}</span>`;
 
 /* ---------- verdict ---------- */
 function verdict(m){
@@ -312,60 +401,100 @@ function verdict(m){
   return {...v, score:s, text:parts.join(" ")};
 }
 
-/* ---------- data ---------- */
+/* ---------- data: all of France, loaded around you ---------- */
+function getDep(d){
+  if(!DEP_P[d]) DEP_P[d] = fetch(`data/${d}.json`).then(r=>r.ok?r.json():null).then(x=>{DEP[d]=x;}).catch(()=>{DEP[d]=null;});
+  return DEP_P[d];
+}
+async function loadNearby(){
+  const near = INDEX.map(c=>({...c, dist:km(state.loc,c)})).sort((a,b)=>a.dist-b.dist);
+  let pick = near.filter(c=>c.dist<=30).slice(0,40);
+  if(pick.length<10) pick = near.slice(0,10);
+  if(state.cine && !pick.some(c=>c.id===state.cine)){ const c=near.find(x=>x.id===state.cine); if(c) pick.push(c); }
+  const deps = [...new Set(pick.map(c=>c.dep))];
+  await Promise.all(deps.map(getDep));
+  const movies={}; let days=[], updated=null;
+  deps.forEach(d=>{ const x=DEP[d]; if(!x) return; Object.assign(movies,x.movies); if(x.days.length>days.length) days=x.days; if(!updated||x.updated>updated) updated=x.updated; });
+  DATA = {days, movies, updated, cinemas: pick.map(c=>({...c, days:(DEP[c.dep] && DEP[c.dep].cinemas[c.id]) || {}}))};
+}
+const hasShows = c => Object.keys(c.days).length>0;
+function endInfo(c, id){
+  const ds=Object.keys(c.days).sort(); if(!ds.length) return null;
+  const mine=ds.filter(d=>c.days[d][id]); if(!mine.length) return null;
+  const last=mine[mine.length-1];
+  if(last>=ds[ds.length-1]) return null;          // still there on the last published day
+  const ss=c.days[last][id]; return {day:last, h:ss[ss.length-1].h};
+}
 function cinemasByDistance(){ return DATA.cinemas.map(c=>({...c, dist:km(state.loc,c)})).sort((a,b)=>a.dist-b.dist); }
-function availableDays(c){ const today=isoDay(new Date()); return DATA.days.filter(d=>d>=today); }
+function availableDays(){ const today=isoDay(new Date()); return DATA.days.filter(d=>d>=today); }
 function sessionsFor(c, day){
   const entries = Object.entries(c.days[day]||{});
   const isToday = day===isoDay(new Date()); const nm=nowMin();
   return entries.map(([id,ss])=>{
-    const m=DATA.movies[id]; let list=ss;
+    const m=DATA.movies[id]; if(!m) return null; let list=ss;
     if(state.f.vo) list=list.filter(s=>s.v==="VO");
     const upcoming = isToday ? list.filter(s=>toMin(s.h)>=nm-5) : list;
-    return {id, m, v:verdict(m), all:list, upcoming, next: upcoming[0]};
-  }).filter(x=>x.all.length && x.upcoming.length)
+    return {id, m, v:verdict(m), all:list, upcoming, next: upcoming[0], end:endInfo(c,id)};
+  }).filter(x=>x && x.all.length && x.upcoming.length)
     .filter(x=>!state.f.good || (x.v.score!=null && x.v.score>=3.5))
-    .filter(x=>!state.f.kids || KIDS.test((x.m.g||[]).join(" ")));
+    .filter(x=>!state.f.kids || KIDS.test((x.m.g||[]).join(" ")))
+    .filter(x=>!state.f.ending || x.end);
+}
+/* next showing of a film in the cinemas around you */
+function nextShowing(id){
+  if(!DATA) return null;
+  const today=isoDay(new Date()), nm=nowMin(); let best=null, count=0;
+  for(const c of cinemasByDistance()){
+    let found=null;
+    for(const d of DATA.days){ if(d<today) continue;
+      const ss=(c.days[d]||{})[id]; if(!ss) continue;
+      const s=ss.find(s=>d!==today || toMin(s.h)>=nm-5); if(s){ found={c,d,s}; break; } }
+    if(found){ count++; if(!best || found.d<best.d || (found.d===best.d && found.s.h<best.s.h && found.c.dist<best.c.dist+15)) best=found; }
+  }
+  return best ? {...best, count} : null;
 }
 
-/* ---------- render ---------- */
+/* ---------- render: Séances ---------- */
 function renderTop(){
   $("locName").textContent = state.loc.name;
   $("locLabel").textContent = state.loc.kind==="gps" ? "Autour de moi" : "Ma position";
 }
 function renderHero(){
   const list = cinemasByDistance();
-  if(!state.cine || !list.find(c=>c.id===state.cine)) state.cine = list[0].id;
+  if(!state.cine || !list.find(c=>c.id===state.cine)) state.cine = (list.find(hasShows) || list[0]).id;
   const c = list.find(x=>x.id===state.cine);
-  const nearest = c.id===list[0].id;
-  $("heroEyebrow").textContent = !nearest ? "Cinéma choisi" : c.dist>60 ? "Cinéma suivi le plus proche" : "Cinéma le plus proche";
+  const nearest = c.id===(list.find(hasShows)||list[0]).id;
+  $("heroEyebrow").textContent = !nearest ? "Cinéma choisi" : "Cinéma le plus proche";
   $("cineName").textContent = c.name;
-  $("cineMeta").innerHTML = `<span><b>${fmtKm(c.dist)}</b> de ${esc(state.loc.name)}</span><span>${esc(c.addr!==c.town?c.addr+", ":"")}${esc(c.town)}</span>`;
-  const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name+" "+c.town)}`;
+  $("cineMeta").innerHTML = `<span><b>${fmtKm(c.dist)}</b> de ${esc(state.loc.name)}</span><span>${esc(c.addr||c.town)}</span>`;
+  const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name+" "+(c.addr||c.town))}`;
   $("cineActions").innerHTML = `<a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
     <a class="btn" href="${maps}" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-8-8 18-2-8z"/></svg>Itinéraire</a>
     <a class="btn" href="${passCulture(c.name)}" target="_blank" rel="noopener">pass Culture</a>`;
-  $("cineStrip").innerHTML = list.slice(0,8).map(x=>`<button class="chip" data-cine="${x.id}" aria-pressed="${x.id===c.id}">${esc(x.name)} <small>${fmtKm(x.dist)}</small></button>`).join("");
+  $("cineStrip").innerHTML = list.slice(0,12).map(x=>`<button class="chip${hasShows(x)?"":" off"}" data-cine="${x.id}" aria-pressed="${x.id===c.id}">${esc(x.name)} <small>${fmtKm(x.dist)}</small></button>`).join("");
   return c;
 }
 function renderDays(c){
-  const days = availableDays(c);
-  if(!state.day || !days.includes(state.day)){
-    // first day that still has something to see
-    state.day = days.find(d=>sessionsFor(c,d).length) || days[0];
-  }
+  const days = availableDays();
+  if(!state.day || !days.includes(state.day)) state.day = days.find(d=>sessionsFor(c,d).length) || days[0];
   $("days").innerHTML = days.map(d=>{const l=dayLabel(d);const has=Object.keys(c.days[d]||{}).length>0;
     return `<button class="day" data-day="${d}" aria-pressed="${d===state.day}" ${has?"":"disabled"}><b>${l.top}</b><span>${l.sub}</span></button>`}).join("");
 }
+function marks(id){
+  const w=WATCH[id], s=SEEN[id];
+  if(!w && !s) return "";
+  return `<span class="marks">${w?`<span class="mark w">${ICON.saved} À voir</span>`:""}${s?`<span class="mark">${ICON.check} Vu${s.rating?` · ${s.rating}★`:""}</span>`:""}</span>`;
+}
 function card(x){
   const m=x.m, v=x.v, isToday=state.day===isoDay(new Date()), nm=nowMin();
-  const img = posterSrc(m) ? `<img class="poster" src="${posterSrc(m)}" alt="${esc(m.t)}" loading="lazy" referrerpolicy="no-referrer" onerror="posterFail(this)">` : `<div class="poster ph">${esc((m.t||"?")[0])}</div>`;
-  const times = x.all.map(s=>{const past=isToday && toMin(s.h)<nm-5; const next=s===x.next && isToday;
-    return `<span class="t${past?" past":""}${next?" next":""}">${s.h}${s.v==="VO"?"<sup>VO</sup>":""}</span>`}).join("");
+  const lastHere = x.end && x.end.day===state.day ? x.end.h : null;
+  const times = x.all.map(s=>{const past=isToday && toMin(s.h)<nm-5; const next=s===x.next && isToday; const last=s.h===lastHere;
+    return `<span class="t${past?" past":""}${next?" next":""}${last?" last":""}">${s.h}${s.v==="VO"?"<sup>VO</sup>":""}${last?'<sup class="l">DERNIÈRE</sup>':""}</span>`}).join("");
+  const endBadge = x.end ? `<span class="ending">${x.end.day===isoDay(new Date())?"Dernier jour":"Jusqu'à "+dayShort(x.end.day)}</span>` : "";
   const soon = isToday && x.next ? `<span class="soon">Prochaine ${inMin(Math.max(0,toMin(x.next.h)-nm))}</span>` : "";
   return `<button class="card" data-film="${x.id}">
-    ${img}
+    ${posterImg(m)}
     <div class="c-body">
       <h3 class="c-title">${esc(m.t)}</h3>
       <div class="c-sub">${esc([m.rt&&m.rt!=="0h 00min"?m.rt.replace(" ",""):null,(m.g||[]).slice(0,2).join(", ")].filter(Boolean).join(" · "))}</div>
@@ -374,6 +503,8 @@ function card(x){
         ${m.pr!=null?`<span class="score">Presse <b>${fr1(m.pr)}</b></span>`:""}
         ${m.u!=null?`<span class="score">Public <b>${fr1(m.u)}</b><span class="star">★</span></span>`:""}
       </div>
+      ${endBadge}
+      ${marks(x.id)}
       ${soon}
       <div class="times">${times}</div>
     </div></button>`;
@@ -384,29 +515,90 @@ function renderList(c){
   else items.sort((a,b)=>toMin(a.next.h)-toMin(b.next.h));
   const isToday = state.day===isoDay(new Date());
   $("listTitle").textContent = isToday ? "Encore aujourd'hui" : "À l'affiche";
-  if(!items.length){
+  if(!hasShows(c)){
+    const covered = DEP[c.dep] != null;
+    $("list").innerHTML = `<div class="empty"><b>${covered?"Pas de séance publiée":"Séances pas encore dans Klap"}</b>${covered?"Ce cinéma ne publie pas ses horaires en ce moment.":"Klap n'affiche pas encore les horaires de cette zone, mais tu peux les voir directement."}<div style="margin-top:14px"><a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Voir les séances de ce cinéma</a></div></div>`;
+  } else if(!items.length){
     const any = Object.keys(c.days[state.day]||{}).length;
     $("list").innerHTML = `<div class="empty"><b>${any? "Plus rien ce jour-là" : "Pas de séance"}</b>${any && isToday ? "Les séances d'aujourd'hui sont passées ou ne correspondent pas aux filtres. Regarde demain." : "Essaie un autre jour, un autre cinéma ou enlève un filtre."}</div>`;
   } else $("list").innerHTML = items.map(card).join("");
-  const up = new Date(DATA.updated);
-  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version 8 · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}.`;
+  const up = DATA.updated ? new Date(DATA.updated) : null;
+  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version ${VERSION}${up?` · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}`:""}.`;
 }
-function render(){ if(!DATA) return;
+function renderShow(){
+  if(!DATA || !DATA.cinemas.length) return;
   const keep=["cineStrip","days"].map(id=>[id,$(id).scrollLeft]);
   renderTop(); const c=renderHero(); renderDays(c); renderList(c);
-  keep.forEach(([id,x])=>{ $(id).scrollLeft=x; }); }
+  keep.forEach(([id,x])=>{ $(id).scrollLeft=x; });
+}
+
+/* ---------- render: À voir ---------- */
+function renderWatch(){
+  const ids = Object.keys(WATCH);
+  $("watchBadge").textContent = ids.length || "";
+  if(state.tab!=="Watch") return;
+  if(!ids.length){ $("watchList").innerHTML = `<div class="empty"><b>Ta liste est vide</b>Ouvre un film et touche « À voir » pour le garder ici. Klap te montrera sa prochaine séance près de toi.</div>`; return; }
+  const rows = ids.map(id=>({id, w:WATCH[id], n:nextShowing(id)}))
+    .sort((a,b)=> (a.n?0:1)-(b.n?0:1) || (a.n&&b.n ? (a.n.d+a.n.s.h).localeCompare(b.n.d+b.n.s.h) : b.w.added-a.w.added));
+  $("watchList").innerHTML = rows.map(({id,w,n})=>{
+    const m = (DATA && DATA.movies[id]) || w.m; const l = n && dayLabel(n.d);
+    const e = n && endInfo(n.c, id);
+    const nxt = n ? `<span class="mini-next">${l.top} ${n.s.h}${n.s.v==="VO"?" (VO)":""} · ${esc(n.c.name)}</span><span class="mini-s">${fmtKm(n.c.dist)}${n.count>1?` · dans ${n.count} cinémas`:""}</span>${e?`<span class="ending">${e.day===isoDay(new Date())?"Dernier jour ici":"Jusqu'à "+dayShort(e.day)}</span>`:""}`
+                  : `<span class="mini-none">Pas de séance près de toi pour l'instant</span>`;
+    return `<div class="mini" data-film="${id}" ${n?`data-cine2="${n.c.id}" data-day2="${n.d}"`:""} role="button" tabindex="0">
+      ${posterImg(m)}
+      <div class="mini-b"><h3 class="mini-t">${esc(m.t)}</h3>${nxt}</div>
+      <button class="icon-btn" data-unwatch="${id}" aria-label="Retirer de la liste">${ICON.trash}</button></div>`;
+  }).join("");
+}
+
+/* ---------- render: Déjà vus ---------- */
+function renderSeen(){
+  if(state.tab!=="Seen") return;
+  const rows = Object.entries(SEEN).sort((a,b)=>b[1].date-a[1].date);
+  if(!rows.length){ $("seenStats").innerHTML=""; $("seenList").innerHTML = `<div class="empty"><b>Aucun film pour l'instant</b>Après une séance, ouvre le film et touche « Je l'ai vu » pour le noter.</div>`; return; }
+  const rated = rows.filter(([,s])=>s.rating);
+  const avg = rated.length ? rated.reduce((t,[,s])=>t+s.rating,0)/rated.length : null;
+  $("seenStats").innerHTML = `<div class="stat-row"><div class="stat"><b>${rows.length}</b><span>film${rows.length>1?"s":""} vu${rows.length>1?"s":""}</span></div><div class="stat"><b>${avg?fr1(avg)+" ★":"–"}</b><span>ta note moyenne</span></div></div>`;
+  $("seenList").innerHTML = rows.map(([id,s])=>`<div class="mini" data-film="${id}" role="button" tabindex="0">
+      ${posterImg(s.m)}
+      <div class="mini-b"><h3 class="mini-t">${esc(s.m.t)}</h3>
+        <span class="mini-s">Vu le ${new Date(s.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
+        ${starsHtml(s.rating||0, id, true)}</div>
+      <button class="icon-btn" data-unseen="${id}" aria-label="Retirer de l'historique">${ICON.trash}</button></div>`).join("");
+}
+function renderAll(){ renderShow(); renderWatch(); renderSeen(); }
+function setTab(t){
+  state.tab=t;
+  ["Show","Watch","Seen"].forEach(x=>{ $("view"+x).hidden = x!==t; });
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===t));
+  $("scroller").scrollTop=0; renderAll();
+}
 
 /* ---------- film sheet ---------- */
-function openFilm(id){
-  const c = DATA.cinemas.find(x=>x.id===state.cine); const m=DATA.movies[id]; const v=verdict(m);
-  const isToday=state.day===isoDay(new Date()), nm=nowMin();
-  const ss=(c.days[state.day]||{})[id]||[]; const next=ss.find(s=>!isToday||toMin(s.h)>=nm-5);
-  const l=dayLabel(state.day);
-  $("filmCine").textContent = `${c.name} · ${l.top} ${l.sub}`;
+let FILM=null;
+function filmActions(id){
+  const w=!!WATCH[id], s=SEEN[id];
+  return `<div class="acts">
+      <button class="act${w?" on":""}" data-watch="${id}">${w?ICON.saved:ICON.save}${w?"Dans ma liste":"À voir"}</button>
+      <button class="act${s?" on":""}" data-seen="${id}">${s?ICON.check:ICON.eye}${s?"Vu":"Je l'ai vu"}</button>
+    </div>
+    ${s?`<div class="rate"><span>${s.rating?"Ta note":"Note ce film"}</span>${starsHtml(s.rating||0,id)}</div>`:""}`;
+}
+function openFilm(id, ctx){
+  const cid = (ctx&&ctx.cine) || state.cine, day = (ctx&&ctx.day) || state.day;
+  const c = DATA && DATA.cinemas.find(x=>x.id===cid);
+  const m = (DATA && DATA.movies[id]) || (WATCH[id]&&WATCH[id].m) || (SEEN[id]&&SEEN[id].m);
+  if(!m) return;
+  FILM={id, m}; const v=verdict(m);
+  const isToday=day===isoDay(new Date()), nm=nowMin();
+  const ss=(c && c.days[day] && c.days[day][id]) || []; const next=ss.find(s=>!isToday||toMin(s.h)>=nm-5);
+  const l=day ? dayLabel(day) : null;
+  $("filmCine").textContent = ss.length ? `${c.name} · ${l.top} ${l.sub}` : "Fiche du film";
   const bar=(lbl,val,cnt,unit)=> val==null ? "" : `<div class="bar-row"><span>${lbl}</span><div class="bar"><i style="width:${val/5*100}%"></i></div><b>${fr1(val)}/5</b><small>${nf.format(cnt||0)} ${unit}</small></div>`;
   $("filmBody").innerHTML = `
     <div class="d-top">
-      ${posterSrc(m)?`<img class="poster" src="${posterSrc(m)}" alt="${esc(m.t)}" referrerpolicy="no-referrer" onerror="posterFail(this)">`:`<div class="poster ph">${esc((m.t||"?")[0])}</div>`}
+      ${posterImg(m)}
       <div>
         <h2 class="d-title">${esc(m.t)}</h2>
         <div class="d-meta">
@@ -418,17 +610,25 @@ function openFilm(id){
         </div>
       </div>
     </div>
+    ${(()=>{ const e=c&&endInfo(c,id); let out="";
+      if(e) out+=`<div class="info-line warn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> <span><b>Bientôt plus à l'affiche ici :</b> dernière séance ${dayShort(e.day)} à ${e.h}.</span></div>`;
+      if(m.rd){ const rd=new Date(m.rd+"T12:00:00"), now=new Date(); const w=Math.floor((now-rd)/(7*864e5));
+        out+= rd>now ? `<div class="info-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none;margin-top:2px"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> <span>Sortie le <b>${rd.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</b> : séances en avant-première.</span></div>`
+          : `<div class="info-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none;margin-top:2px"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> <span>Sorti le <b>${rd.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</b> · ${w<1?"cette semaine":`à l'affiche depuis ${w} semaine${w>1?"s":""}`}${w>=5&&!e?" : il pourrait bientôt quitter les salles":""}.</span></div>`; }
+      return out; })()}
+    <div id="filmActs">${filmActions(id)}</div>
     <div class="advice" style="--v:${v.color}">
       <div class="lbl">Mon conseil · ${v.label}${v.score!=null?` · ${fr1(v.score)}/5`:""}</div>
       <h4>${v.title}</h4><p>${v.text}</p>
     </div>
     <div class="bars">${bar("Presse",m.pr,m.pc,(m.pc>1?"critiques":"critique"))}${bar("Spectateurs",m.u,m.uc,"notes")}</div>
     ${m.s?`<p class="syn">${esc(m.s)}</p>`:""}
-    <h4 class="sec-t">Séances · ${l.top} ${l.sub}</h4>
+    ${ss.length?`<h4 class="sec-t">Séances · ${l.top} ${l.sub}</h4>
     <div class="d-times">${ss.map(s=>{const past=isToday&&toMin(s.h)<nm-5;
-      return `<span class="t${past?" past":""}${s===next&&isToday?" next":""}">${s.h}<sup>${s.v}</sup>${(s.fx||[]).map(f=>FX[f]?`<span class="fx">${FX[f]}</span>`:"").join("")}</span>`}).join("")}</div>
+      return `<span class="t${past?" past":""}${s===next&&isToday?" next":""}">${s.h}<sup>${s.v}</sup>${(s.fx||[]).map(f=>FX[f]?`<span class="fx">${FX[f]}</span>`:"").join("")}</span>`}).join("")}</div>`
+    : `<h4 class="sec-t">Séances</h4><p class="mini-none">Pas de séance de ce film près de toi pour l'instant.</p>`}
     <div class="links">
-      <a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver une place</a>
+      ${ss.length?`<a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver une place</a>`:""}
       <a class="btn" href="https://www.allocine.fr/film/fichefilm_gen_cfilm=${id}.html" target="_blank" rel="noopener">Critiques complètes</a>
       <a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(m.t+" bande annonce")}" target="_blank" rel="noopener">Bande-annonce</a>
     </div>
@@ -439,26 +639,55 @@ function openFilm(id){
     </a>`;
   $("filmBody").scrollTop=0; openSheet("filmSheet");
 }
+function refreshFilmActs(){ if(FILM && $("filmActs")) $("filmActs").innerHTML = filmActions(FILM.id); }
+const slim = m => ({t:m.t, ot:m.ot, p:m.p, rt:m.rt, g:m.g, d:m.d, c:m.c, s:m.s, u:m.u, uc:m.uc, pr:m.pr, pc:m.pc, ce:m.ce, rd:m.rd});
+function toggleWatch(id){
+  if(WATCH[id]) delete WATCH[id]; else { const m=(DATA&&DATA.movies[id])||(SEEN[id]&&SEEN[id].m)||(FILM&&FILM.m); WATCH[id]={m:slim(m), added:Date.now()}; }
+  store.set("watch",WATCH); refreshFilmActs(); renderAll();
+}
+function toggleSeen(id){
+  if(SEEN[id]) delete SEEN[id];
+  else { const m=(DATA&&DATA.movies[id])||(WATCH[id]&&WATCH[id].m)||(FILM&&FILM.m); SEEN[id]={m:slim(m), rating:0, date:Date.now()}; delete WATCH[id]; store.set("watch",WATCH); }
+  store.set("seen",SEEN); refreshFilmActs(); renderAll();
+}
+function rate(id,n){ if(!SEEN[id]) return; SEEN[id].rating = SEEN[id].rating===n ? 0 : n; store.set("seen",SEEN); refreshFilmActs(); renderSeen(); if(state.tab==="Show") renderShow(); }
 
-/* ---------- location sheet ---------- */
+/* ---------- location sheet: any town in France ---------- */
+let PLACES=[], searchTimer=null, searchSeq=0;
 function renderLocList(q=""){
-  const n = s => s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
-  const qq=n(q.trim());
-  const cities = CITIES.filter(c=>!qq || n(c.name+" "+c.dept).includes(qq));
-  const cines = DATA ? DATA.cinemas.filter(c=>!qq || n(c.name+" "+c.town+" "+c.city).includes(qq)) : [];
-  const pin = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`;
-  const film = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>`;
-  const check = `<svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="m5 12 5 5 9-10"/></svg>`;
-  let h="";
-  if(cities.length) h += `<div class="group-label">Villes</div>` + cities.map(c=>{
-    const n = DATA ? DATA.cinemas.filter(x=>km(c,x)<25).length : 0;
-    return `<button class="row" data-city="${esc(c.name)}"><span class="ico">${pin}</span><span><b>${esc(c.name)}</b><span>${esc(c.dept)} · ${n} cinéma${n>1?"s":""}</span></span>${state.loc.kind==="city"&&state.loc.name===c.name?check:""}</button>`}).join("");
-  if(cines.length) h += `<div class="group-label">Cinémas</div>` + cines.map(c=>
-    `<button class="row" data-pick="${c.id}"><span class="ico">${film}</span><span><b>${esc(c.name)}</b><span>${esc(c.town)}</span></span>${state.cine===c.id?check:""}</button>`).join("");
-  if(!h) h = `<div class="note">Aucune ville ne correspond à « ${esc(q)} ». Les séances sont disponibles pour Rennes, Saint-Malo, Lannion et Langon.</div>`;
+  const qq=norm(q.trim()); let h="";
+  const cines = qq.length>=2 && INDEX ? INDEX.filter(c=>norm(c.name+" "+c.town).includes(qq)).slice(0,8) : [];
+  if(!qq){
+    const recent = store.get("recent") || [];
+    if(recent.length) h += `<div class="group-label">Récents</div>` + recent.map((p,i)=>`<button class="row" data-recent="${i}"><span class="ico">${ICON.clock}</span><span><b>${esc(p.name)}</b><span>${esc(p.ctx||"")}</span></span>${state.loc.name===p.name?ICON.ok:""}</button>`).join("");
+    h += `<div class="group-label">Grandes villes</div>` + QUICK.map(([n],i)=>`<button class="row" data-quick="${i}"><span class="ico">${ICON.pin}</span><span><b>${n}</b></span>${state.loc.name===n?ICON.ok:""}</button>`).join("");
+  } else {
+    if(PLACES.length) h += `<div class="group-label">Villes</div>` + PLACES.map((p,i)=>`<button class="row" data-place="${i}"><span class="ico">${ICON.pin}</span><span><b>${esc(p.name)}</b><span>${esc(p.ctx)}</span></span></button>`).join("");
+    if(cines.length) h += `<div class="group-label">Cinémas</div>` + cines.map(c=>`<button class="row" data-pick="${c.id}"><span class="ico">${ICON.film}</span><span><b>${esc(c.name)}</b><span>${esc(c.town)}</span></span>${state.cine===c.id?ICON.ok:""}</button>`).join("");
+    if(!h) h = `<div class="note loading">Recherche…</div>`;
+  }
   $("locList").innerHTML = h;
 }
-function setLoc(loc){ state.loc=loc; state.cine=null; state.day=null; store.set("loc",loc); closeSheets(); render(); }
+function searchPlaces(q){
+  clearTimeout(searchTimer); PLACES=[];
+  if(q.trim().length<2){ renderLocList(q); return; }
+  renderLocList(q);
+  const seq=++searchSeq;
+  searchTimer=setTimeout(()=>{
+    fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(q)}&type=municipality&limit=6`).then(r=>r.json()).then(j=>{
+      if(seq!==searchSeq) return;
+      PLACES=(j.features||[]).map(f=>({name:f.properties.city||f.properties.name, ctx:[f.properties.postcode,(f.properties.context||"").split(", ").slice(1).join(", ")].filter(Boolean).join(" · "), lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0]}));
+      renderLocList(q);
+      if(!PLACES.length && !$("locList").querySelector(".row")) $("locList").innerHTML=`<div class="note">Aucune ville trouvée pour « ${esc(q)} ». Vérifie l'orthographe ou tape un code postal.</div>`;
+    }).catch(()=>{ if(seq===searchSeq) $("locList").innerHTML=`<div class="note">Recherche impossible sans connexion. Réessaie dans un instant.</div>`; });
+  },250);
+}
+function remember(p){ const r=(store.get("recent")||[]).filter(x=>x.name!==p.name); r.unshift({name:p.name,ctx:p.ctx||"",lat:p.lat,lng:p.lng}); store.set("recent",r.slice(0,4)); }
+async function setLoc(loc, cine){
+  state.loc=loc; state.cine=cine||null; state.day=null; store.set("loc",loc); closeSheets(); renderTop();
+  $("cineName").textContent="Recherche des cinémas…"; $("cineMeta").innerHTML=""; $("cineActions").innerHTML="";
+  await loadNearby(); renderAll();
+}
 
 /* ---------- sheets ---------- */
 let lastFocus=null;
@@ -467,9 +696,8 @@ function unlockPage(){ $("scroller").classList.remove("locked"); }
 function openSheet(id){ lastFocus=document.activeElement; lockPage(); $("scrim").classList.add("open"); const s=$(id); s.style.transform=""; s.classList.add("open"); }
 function closeSheets(){ const open=document.querySelectorAll(".sheet.open"); if(!open.length) return;
   if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  open.forEach(s=>{s.classList.remove("open"); s.style.transform="";}); $("scrim").classList.remove("open"); unlockPage();
+  open.forEach(s=>{s.classList.remove("open"); s.style.transform="";}); $("scrim").classList.remove("open"); unlockPage(); FILM=null;
   if(lastFocus && lastFocus.focus) try{ lastFocus.focus({preventScroll:true}); }catch(e){} }
-/* swipe a panel down to close it, like a native sheet */
 document.querySelectorAll(".sheet").forEach(s=>{
   let y0=null, dy=0;
   const start=e=>{ const body=s.querySelector(".sheet-body"); if(e.target.closest(".sheet-body") && body.scrollTop>0) return; if(e.target.closest("input,button,a")) return; y0=e.touches[0].clientY; dy=0; s.classList.add("dragging"); };
@@ -477,7 +705,6 @@ document.querySelectorAll(".sheet").forEach(s=>{
   const end=()=>{ if(y0==null) return; s.classList.remove("dragging"); y0=null; if(dy>90) closeSheets(); else s.style.transform=""; };
   s.addEventListener("touchstart",start,{passive:true}); s.addEventListener("touchmove",move,{passive:false}); s.addEventListener("touchend",end); s.addEventListener("touchcancel",end);
 });
-/* nothing behind an open panel can scroll: only the panel's own list moves, and only while it has room to */
 let tY=0, tX=0;
 document.addEventListener("touchstart",e=>{ tY=e.touches[0].clientY; tX=e.touches[0].clientX; },{passive:true});
 document.addEventListener("touchmove",e=>{
@@ -485,7 +712,7 @@ document.addEventListener("touchmove",e=>{
   if(!document.querySelector(".sheet.open")){
     const dy=e.touches[0].clientY-tY, dx=e.touches[0].clientX-tX, sc=$("scroller");
     if(Math.abs(dy)<=Math.abs(dx)) return;
-    if((dy>0 && sc.scrollTop<=0) || (dy<0 && sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1)) e.preventDefault();
+    if(e.target.closest(".tabbar") || (dy>0 && sc.scrollTop<=0) || (dy<0 && sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1)) e.preventDefault();
     return;
   }
   const list=e.target.closest(".sheet-body");
@@ -498,38 +725,46 @@ $("scrim").addEventListener("touchmove",e=>{ if(e.cancelable) e.preventDefault()
 
 /* ---------- events ---------- */
 document.addEventListener("click", e=>{
-  const t=e.target.closest("[data-cine],[data-day],[data-film],[data-city],[data-pick],[data-f],[data-close]"); if(!t) return;
-  if(t.dataset.close!==undefined) return closeSheets();
-  if(t.dataset.cine){ state.cine=t.dataset.cine; state.day=null; render(); }
-  else if(t.dataset.day){ state.day=t.dataset.day; render(); }
-  else if(t.dataset.film){ openFilm(t.dataset.film); }
-  else if(t.dataset.city){ const c=CITIES.find(x=>x.name===t.dataset.city); setLoc({kind:"city",name:c.name,lat:c.lat,lng:c.lng}); }
-  else if(t.dataset.pick){ const c=DATA.cinemas.find(x=>x.id===t.dataset.pick); state.loc={kind:"city",name:c.city,lat:c.lat,lng:c.lng}; store.set("loc",state.loc); state.cine=c.id; state.day=null; closeSheets(); render(); }
-  else if(t.dataset.f){ state.f[t.dataset.f]=!state.f[t.dataset.f]; t.setAttribute("aria-pressed",state.f[t.dataset.f]); render(); }
+  const t=e.target.closest("[data-rate],[data-unwatch],[data-unseen],[data-watch],[data-seen],[data-tab],[data-cine],[data-day],[data-film],[data-place],[data-quick],[data-recent],[data-pick],[data-f],[data-close]"); if(!t) return;
+  const d=t.dataset;
+  if(d.close!==undefined) return closeSheets();
+  if(d.rate) return rate(d.rate, +d.n);
+  if(d.unwatch){ delete WATCH[d.unwatch]; store.set("watch",WATCH); return renderAll(); }
+  if(d.unseen){ delete SEEN[d.unseen]; store.set("seen",SEEN); return renderAll(); }
+  if(d.watch) return toggleWatch(d.watch);
+  if(d.seen) return toggleSeen(d.seen);
+  if(d.tab) return setTab(d.tab);
+  if(d.cine){ state.cine=d.cine; state.day=null; renderShow(); }
+  else if(d.day){ state.day=d.day; renderShow(); }
+  else if(d.film){ openFilm(d.film, d.cine2 ? {cine:d.cine2, day:d.day2} : null); }
+  else if(d.place){ const p=PLACES[+d.place]; remember(p); setLoc({kind:"city",name:p.name,lat:p.lat,lng:p.lng}); }
+  else if(d.quick){ const [n,lat,lng]=QUICK[+d.quick]; remember({name:n,lat,lng}); setLoc({kind:"city",name:n,lat,lng}); }
+  else if(d.recent){ const p=(store.get("recent")||[])[+d.recent]; if(p) setLoc({kind:"city",name:p.name,lat:p.lat,lng:p.lng}); }
+  else if(d.pick){ const c=INDEX.find(x=>x.id===d.pick); remember({name:c.town,ctx:c.name,lat:c.lat,lng:c.lng}); setLoc({kind:"city",name:c.town||c.name,lat:c.lat,lng:c.lng}, c.id); }
+  else if(d.f){ state.f[d.f]=!state.f[d.f]; t.setAttribute("aria-pressed",state.f[d.f]); renderShow(); }
 });
 $("scrim").onclick=closeSheets;
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheets(); });
-$("locBtn").onclick=()=>{ $("locSearch").value=""; renderLocList(); openSheet("locSheet"); };
-$("locSearch").oninput=e=>renderLocList(e.target.value);
-$("sortSoon").onclick=()=>{state.sort="soon";$("sortSoon").setAttribute("aria-pressed",true);$("sortBest").setAttribute("aria-pressed",false);render();};
-$("sortBest").onclick=()=>{state.sort="best";$("sortBest").setAttribute("aria-pressed",true);$("sortSoon").setAttribute("aria-pressed",false);render();};
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheets(); if(e.key==="Enter" && e.target.matches(".mini")) e.target.click(); });
+$("locBtn").onclick=()=>{ $("locSearch").value=""; PLACES=[]; renderLocList(); openSheet("locSheet"); };
+$("locSearch").oninput=e=>searchPlaces(e.target.value);
+$("locSearch").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); } };
+$("sortSoon").onclick=()=>{state.sort="soon";$("sortSoon").setAttribute("aria-pressed",true);$("sortBest").setAttribute("aria-pressed",false);renderShow();};
+$("sortBest").onclick=()=>{state.sort="best";$("sortBest").setAttribute("aria-pressed",true);$("sortSoon").setAttribute("aria-pressed",false);renderShow();};
 function locate(silent){
   const st=$("gpsState"), say=t=>{ if(!silent) st.textContent=t; };
   if(!navigator.geolocation){ say("Localisation indisponible ici : choisis une ville ci-dessous."); return; }
   say("Recherche de ta position…");
   let done=false; const fail=()=>{ if(done) return; done=true; say("Position refusée ou introuvable. Autorise la localisation pour ce site, ou choisis ta ville ci-dessous."); };
   setTimeout(fail,8000);
-  try{ navigator.geolocation.getCurrentPosition(p=>{ if(done) return; done=true;
+  try{ navigator.geolocation.getCurrentPosition(async p=>{ if(done) return; done=true;
       say("Utiliser la position du téléphone");
-      // the launch-time lookup never overrides a choice made meanwhile or closes an open panel
       if(silent && (store.get("loc") || document.querySelector(".sheet.open"))) return;
-      const here={lat:p.coords.latitude,lng:p.coords.longitude};
-      const city=CITIES.map(c=>({...c,d:km(here,c)})).sort((a,b)=>a.d-b.d)[0];
-      setLoc({kind:"gps",name: city.d<15 ? city.name : "Ma position", ...here}); }, fail, {timeout:7000,maximumAge:300000});
+      const here={lat:p.coords.latitude,lng:p.coords.longitude}; let name="Ma position";
+      try{ const j=await (await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${here.lng}&lat=${here.lat}&type=municipality`)).json(); if(j.features&&j.features[0]) name=j.features[0].properties.city||name; }catch(e){}
+      setLoc({kind:"gps",name,...here}); }, fail, {timeout:7000,maximumAge:300000});
   }catch(e){ fail(); }
 }
 $("gpsBtn").onclick=()=>locate(false);
-if(!store.get("loc") && navigator.geolocation) locate(true);
 
 /* no zoom, ever: pinch, double tap, or the auto-zoom on a text field */
 ["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
@@ -538,23 +773,25 @@ let lastTap=0, lastEl=null;
 document.addEventListener("touchend",e=>{ const now=Date.now(); if(now-lastTap<300 && e.target===lastEl && !e.target.closest("input,textarea") && e.cancelable) e.preventDefault(); lastTap=now; lastEl=e.target; },{passive:false});
 document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
 ["gesturestart","gesturechange"].forEach(t=>window.addEventListener(t,e=>e.preventDefault(),{passive:false}));
-const pin=()=>{ if(window.scrollY||window.scrollX) window.scrollTo(0,0); };
-window.addEventListener("scroll",pin,{passive:true});
-document.addEventListener("focusin",()=>setTimeout(pin,0));
-if(window.visualViewport) visualViewport.addEventListener("scroll",pin);
+const pinTop=()=>{ if(window.scrollY||window.scrollX) window.scrollTo(0,0); };
+window.addEventListener("scroll",pinTop,{passive:true});
+document.addEventListener("focusin",()=>setTimeout(pinTop,0));
+if(window.visualViewport) visualViewport.addEventListener("scroll",pinTop);
 const vpMeta=document.querySelector('meta[name="viewport"]');
 function resetZoom(){ if(!vpMeta) return; const c=vpMeta.content; vpMeta.content=c.replace("maximum-scale=1","maximum-scale=1.0"); requestAnimationFrame(()=>{ vpMeta.content=c; }); }
 document.addEventListener("focusout",e=>{ if(e.target.matches("input,textarea")) setTimeout(resetZoom,50); });
 if(window.visualViewport) visualViewport.addEventListener("resize",()=>{ if(visualViewport.scale>1.01 && !document.activeElement.matches("input,textarea")) resetZoom(); });
 
-/* clock: refresh time-dependent bits every 30 s */
+/* clock: time-dependent bits follow the minute */
 function tick(){ const d=new Date(); $("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 tick(); let lastMin=nowMin();
-setInterval(()=>{ tick(); const n=nowMin(); if(n!==lastMin){ lastMin=n; if(!document.querySelector(".sheet.open")) render(); } }, 15000);
+setInterval(()=>{ tick(); const n=nowMin(); if(n!==lastMin){ lastMin=n; if(!document.querySelector(".sheet.open")) renderAll(); } }, 15000);
 
-fetch("seances.json").then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(d=>{ DATA=d; render(); })
-  .catch(()=>{ $("cineName").textContent="Séances indisponibles"; $("list").innerHTML=`<div class="empty"><b>Impossible de charger les séances</b>Recharge la page dans un instant.</div>`; });
-renderTop();
+/* start */
+renderTop(); renderWatch();
+fetch("cinemas.json").then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(async idx=>{ INDEX=idx; await loadNearby(); renderAll(); if(!store.get("loc") && navigator.geolocation) locate(true); })
+  .catch(()=>{ $("cineName").textContent="Séances indisponibles"; $("list").innerHTML=`<div class="empty"><b>Impossible de charger les cinémas</b>Vérifie ta connexion et rouvre Klap.</div>`; });
 })();
 </script>
 </body>
