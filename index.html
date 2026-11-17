@@ -246,6 +246,11 @@ input,select,textarea{font-size:16px!important}
 .stat span{font-size:12px;color:var(--muted)}
 .chip.off{opacity:.5}
 .loading{color:var(--muted)}
+.alert{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:12px 14px;border-radius:16px;text-align:left;background:color-mix(in srgb,var(--bad) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--bad) 35%,transparent);color:var(--fg)}
+.alert .ai{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;background:var(--bad);color:#fff}
+.alert b{display:block;font-weight:800;font-size:14px}
+.alert span{font-size:12.5px;color:var(--muted)}
+.alert .go{margin-left:auto;font-weight:800;font-size:13px;color:var(--bad);flex:none}
 .ending{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
 .ending::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--bad)}
 .t.last{box-shadow:inset 0 0 0 1.5px var(--bad)}
@@ -373,6 +378,7 @@ input,select,textarea{font-size:16px!important}
     <button class="chip" data-f="kids" aria-pressed="false">En famille</button>
     <button class="chip" data-f="ending" aria-pressed="false">Bientôt plus à l'affiche</button>
   </div>
+  <button class="alert" id="endAlert" hidden></button>
   <div class="list" id="list"></div>
   <p class="foot" id="foot"></p>
  </div>
@@ -422,7 +428,7 @@ input,select,textarea{font-size:16px!important}
 
 <script>
 (() => {
-const VERSION = 12;
+const VERSION = 13;
 const QUICK = [["Paris",48.8566,2.3522],["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698],["Toulouse",43.6047,1.4442],["Bordeaux",44.8378,-0.5792],["Nantes",47.2184,-1.5536],["Lille",50.6292,3.0573],["Rennes",48.1113,-1.68]];
 const FX = {DOLBY_CINEMA:"DOLBY", E_4DX:"4DX", ICE:"ICE", LASER:"LASER", PLF:"GRAND ÉCRAN", F_4K:"4K", LUXURY:"CONFORT", DOLBY_ATMOS:"ATMOS", IMAX:"IMAX", E_3D:"3D"};
 const KIDS = /Animation|Famille/;
@@ -619,6 +625,20 @@ function renderList(c){
     const any = Object.keys(c.days[state.day]||{}).length;
     $("list").innerHTML = `<div class="empty"><b>${any? "Plus rien ce jour-là" : "Pas de séance"}</b>${any && isToday ? "Les séances d'aujourd'hui sont passées ou ne correspondent pas aux filtres. Regarde demain." : "Essaie un autre jour, un autre cinéma ou enlève un filtre."}</div>`;
   } else $("list").innerHTML = items.map(card).join("");
+  // films about to leave this cinema (it already published later days without them)
+  const today=isoDay(new Date());
+  const leaving = hasShows(c) ? Object.keys(Object.assign({}, ...Object.values(c.days)))
+      .map(id=>({id, e:endInfo(c,id), m:DATA.movies[id]})).filter(x=>x.e && x.e.day>=today && x.m) : [];
+  const al=$("endAlert");
+  if(!leaving.length){ al.hidden=true; }
+  else {
+    leaving.sort((a,b)=>a.e.day.localeCompare(b.e.day));
+    const names = leaving.slice(0,2).map(x=>x.m.t).join(", ") + (leaving.length>2?` et ${leaving.length-2} autre${leaving.length>3?"s":""}`:"");
+    al.hidden=false;
+    al.innerHTML = state.f.ending
+      ? `<span class="ai"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><b>Films qui partent bientôt</b><span>Seuls ceux-là sont affichés.</span></span><span class="go">Tout voir</span>`
+      : `<span class="ai"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><b>${leaving.length} film${leaving.length>1?"s quittent":" quitte"} bientôt ce cinéma</b><span>${esc(names)}</span></span><span class="go">Voir</span>`;
+  }
   const up = DATA.updated ? new Date(DATA.updated) : null;
   $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version ${VERSION}${up?` · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}`:""}.`;
 }
@@ -845,6 +865,7 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheets(); if(
 $("locBtn").onclick=()=>{ $("locSearch").value=""; PLACES=[]; renderLocList(); openSheet("locSheet"); };
 $("locSearch").oninput=e=>searchPlaces(e.target.value);
 $("locSearch").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); } };
+$("endAlert").onclick=()=>{ state.f.ending=!state.f.ending; const ch=document.querySelector('[data-f="ending"]'); if(ch) ch.setAttribute("aria-pressed",state.f.ending); state.day=null; renderShow(); };
 $("sortSoon").onclick=()=>{state.sort="soon";$("sortSoon").setAttribute("aria-pressed",true);$("sortBest").setAttribute("aria-pressed",false);renderShow();};
 $("sortBest").onclick=()=>{state.sort="best";$("sortBest").setAttribute("aria-pressed",true);$("sortSoon").setAttribute("aria-pressed",false);renderShow();};
 let locating=false;
