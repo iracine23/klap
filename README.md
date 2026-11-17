@@ -1,6 +1,6 @@
 # Klap
 
-Le cinéma le plus proche de toi, partout en France : séances qui suivent l'heure, notes presse et spectateurs d'AlloCiné, un conseil pour chaque film, une liste « À voir » et l'historique des films vus avec ta note.
+Site : https://klap.pages.dev — le cinéma le plus proche de toi, partout en France : séances qui suivent l'heure, notes presse et spectateurs d'AlloCiné, un conseil pour chaque film, une liste « À voir » et l'historique des films vus avec ta note.
 
 ## Comment ça marche
 
