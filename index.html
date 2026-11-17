@@ -817,7 +817,8 @@ async function searchFilms(q){
   const films = FILMS_SYNC = await getFilms(); const qq=norm(q.trim());
   if(qq.length<2){ $("filmRes").innerHTML = `<div class="note">Tape au moins 2 lettres du titre. Klap cherche dans tous les cinémas couverts, même loin de chez toi.</div>`; return; }
   const near = c => INDEX ? Math.min(...c.map(id=>{ const x=INDEX.find(k=>k.id===id); return x?km(state.loc,x):1e9; })) : null;
-  const hits = Object.entries(films).filter(([,f])=>norm(f.t).includes(qq) || norm(f.ot).includes(qq))
+  const known = new Set((INDEX||[]).map(c=>c.id));
+  const hits = Object.entries(films).map(([id,f])=>[id,{...f, cs:f.cs.filter(c=>known.has(c))}]).filter(([,f])=>f.cs.length && (norm(f.t).includes(qq) || norm(f.ot).includes(qq)))
     .map(([id,f])=>({id,f,starts:norm(f.t).startsWith(qq),d:near(f.cs)}))
     .sort((a,b)=>(b.starts-a.starts) || (a.d-b.d)).slice(0,25);
   if(!hits.length){ $("filmRes").innerHTML = `<div class="note">Aucun film « ${esc(q)} » à l'affiche dans les cinémas couverts en ce moment. Vérifie l'orthographe ou essaie un autre mot du titre.</div>`; return; }
