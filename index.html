@@ -483,7 +483,7 @@ input,select,textarea{font-size:16px!important}
 
 <script>
 (() => {
-const VERSION = 23;
+const VERSION = 24;
 const QUICK = [["Paris",48.8566,2.3522],["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698],["Toulouse",43.6047,1.4442],["Bordeaux",44.8378,-0.5792],["Nantes",47.2184,-1.5536],["Lille",50.6292,3.0573],["Rennes",48.1113,-1.68]];
 const FX = {DOLBY_CINEMA:"DOLBY", E_4DX:"4DX", ICE:"ICE", LASER:"LASER", PLF:"GRAND ÉCRAN", F_4K:"4K", LUXURY:"CONFORT", DOLBY_ATMOS:"ATMOS", IMAX:"IMAX", E_3D:"3D"};
 const KIDS = /Animation|Famille/;
@@ -685,6 +685,10 @@ function renderList(c){
   else items.sort((a,b)=>toMin(a.next.h)-toMin(b.next.h));
   const isToday = state.day===isoDay(new Date());
   $("listTitle").textContent = isToday ? "Encore aujourd'hui" : "À l'affiche";
+  if(!availableDays().length){
+    $("list").innerHTML = `<div class="empty"><b>Séances en cours de mise à jour</b>Les horaires de la semaine arrivent dans quelques minutes. Reviens un peu plus tard.</div>`;
+    $("endAlert").hidden=true; return;
+  }
   if(!hasShows(c)){
     const covered = DEP[c.dep] != null;
     $("list").innerHTML = `<div class="empty"><b>${covered?"Pas de séance publiée":"Séances pas encore dans Klap"}</b>${covered?"Ce cinéma ne publie pas ses horaires en ce moment.":"Klap n'affiche pas encore les horaires de cette zone, mais tu peux les voir directement."}<div style="margin-top:14px"><a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Voir les séances de ce cinéma</a></div></div>`;

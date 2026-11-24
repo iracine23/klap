@@ -14,6 +14,7 @@ ZONES = {"22", "29", "35", "56",            # Bretagne
          "69", "13", "31", "59", "34", "67", "06"}  # Lyon, Marseille, Toulouse, Lille, Montpellier, Strasbourg, Nice
 RATE = 0.5          # requêtes par seconde, au maximum (au-delà, AlloCiné bloque)
 _lock, _next = threading.Lock(), [0.0]
+DEADLINE = [float("inf")]  # heure limite : au-delà, on garde les dernières séances connues
 
 
 def _wait_turn():
@@ -105,6 +106,9 @@ def day(cid, d):
 def theater(c, days):
     sched, movies, ok = {}, {}, True
     for d in days:
+        if time.time() > DEADLINE[0]:
+            ok = False
+            break
         try:
             rows = day(c["id"], d)
         except Exception:
@@ -149,11 +153,14 @@ def main():
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--jours", type=int, default=7, help="nombre de jours à récupérer à partir d'aujourd'hui")
+    ap.add_argument("--max-minutes", type=int, default=0, help="durée maximale ; au-delà, on publie ce qu'on a")
     ap.add_argument("--index-seulement", action="store_true", help="refaire seulement data/films.json")
     ap.add_argument("--toute-la-france", action="store_true", help="toutes les salles (très long : AlloCiné limite le rythme)")
     a = ap.parse_args()
     if a.index_seulement:
         return build_index()
+    if a.max_minutes:
+        DEADLINE[0] = time.time() + 60 * a.max_minutes
     today = datetime.date.today()
     days = [(today + datetime.timedelta(i)).isoformat() for i in range(a.jours)]
     cinemas = json.load(open("cinemas.json", encoding="utf-8"))
