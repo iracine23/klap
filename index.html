@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="description" content="Le cinéma le plus proche, ses séances en temps réel, les notes presse et spectateurs et un conseil pour chaque film.">
+<meta name="theme-color" content="#6C3BF5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Klap">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="application-name" content="Klap">
+<meta property="og:title" content="Klap">
+<meta property="og:description" content="Quoi voir ce soir, et où.">
+<meta property="og:image" content="https://klap.pages.dev/og-image-1200x630.png">
+<meta property="og:url" content="https://klap.pages.dev/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<title>Klap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: one phone-width app column — sticky location bar, nearest-cinema hero, day strip, film list; sheets slide up from the bottom. */
+/* Klap identity: violet #6C3BF5, rose #FF4D8D, nuit #2A1260, lavande #EFEAFF, écran #F7F5FF. Light first, nuit in dark mode. */
+:root{
+  --bg:#F7F5FF; --surface:#FFFFFF; --surface-2:#EFEAFF; --line:#E6DFFF;
+  --fg:#2A1260; --muted:#6E6496; --accent:#6C3BF5; --accent-ink:#FFFFFF; --rose:#FF4D8D;
+  --soon-bg:#FFE3EE; --soon-fg:#D6246A; --past-fg:#A79BC9;
+  --good:#12B76A; --ok:#5BC26B; --mid:#F79009; --bad:#E5484D; --none:#9A90BF;
+  --v-must:#12B76A; --v-great:#5BC26B; --v-good:#F5B700; --v-mixed:#F79009; --v-bad:#E5484D;
+  --grad:linear-gradient(135deg,#6C3BF5,#FF4D8D);
+  --shadow:0 14px 34px -18px rgba(42,18,96,.35);
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1B0B42; --surface:#2A1260; --surface-2:#3A2080; --line:#45288F;
+  --fg:#F7F5FF; --muted:#B8ACE3; --accent:#7C52FF; --accent-ink:#FFFFFF; --rose:#FF5C97;
+  --soon-bg:#4B1747; --soon-fg:#FF8DB5; --past-fg:#7F70B3; --none:#8A7FB8;
+  --shadow:0 18px 40px -18px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1B0B42; --surface:#2A1260; --surface-2:#3A2080; --line:#45288F;
+  --fg:#F7F5FF; --muted:#B8ACE3; --accent:#7C52FF; --accent-ink:#FFFFFF; --rose:#FF5C97;
+  --soon-bg:#4B1747; --soon-fg:#FF8DB5; --past-fg:#7F70B3; --none:#8A7FB8;
+  --shadow:0 18px 40px -18px rgba(0,0,0,.7); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+*,*::before,*::after{touch-action:pan-x pan-y}
+html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;margin:0;background:var(--bg);overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body,button,a{-webkit-tap-highlight-color:transparent}
+button,a,.chip,.day,.card,.loc{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+img{-webkit-user-drag:none;-webkit-touch-callout:none}
+#scroller{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#scroller.locked{overflow:hidden}
+body{margin:0;color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:10px}
+a{color:inherit}
+.app{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+
+/* top bar */
+.top{position:relative;z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;padding-block:14px 10px}
+.top{justify-content:space-between}
+.logo{height:28px;width:auto;display:block}
+.logo.l-dark{display:none}
+@media (prefers-color-scheme: dark){.logo.l-light{display:none}.logo.l-dark{display:block}}
+.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:10px}
+.steps li{counter-increment:s;position:relative;padding:12px 14px 12px 50px;border-radius:14px;background:var(--surface-2);font-size:14px;line-height:1.45}
+.steps li::before{content:counter(s);position:absolute;left:12px;top:11px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center}
+.steps li span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.locrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 8px}
+.locrow .loc{margin:0}
+.locate{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:12px;background:var(--surface-2);color:var(--accent);font-weight:800;font-size:13px;flex:none}
+.locate.busy svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loc{display:flex;align-items:center;gap:10px;min-width:0;flex:1;text-align:left}
+.loc-ico{width:38px;height:38px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;flex:none;color:var(--accent)}
+.loc-txt{min-width:0}
+.loc-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.loc-name{font-family:var(--f-display);font-weight:700;font-size:19px;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clock{font-family:var(--f-mono);font-weight:800;font-size:13px;background:var(--surface-2);padding:7px 10px;border-radius:10px;display:flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
+.clock i{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 25%,transparent)}
+
+/* hero */
+.hero{margin-top:6px;background:linear-gradient(140deg,var(--surface-2),var(--surface) 70%);border:1px solid var(--line);border-radius:22px;padding:18px;position:relative;overflow:hidden}
+.eyebrow{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--rose);font-weight:700}
+.hero h1{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1.05;margin:6px 0 4px;text-wrap:balance;letter-spacing:-.01em}
+.hero-meta{color:var(--muted);font-size:13.5px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.hero-meta b{color:var(--fg);font-weight:600}
+.hero-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;position:relative;z-index:1}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:12px;font-weight:600;font-size:13.5px;text-decoration:none;background:var(--bg);border:1px solid var(--line)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn{background:var(--surface)}
+
+.cine-strip{overscroll-behavior-x:contain;display:flex;gap:8px;overflow-x:auto;padding:12px 2px 2px;margin:0 -2px;scrollbar-width:none}
+.cine-strip::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:500;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.chip small{color:var(--muted);font-family:var(--f-mono);font-size:11px}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chip[aria-pressed="true"] small{color:inherit;opacity:.7}
+
+/* days + tools */
+.days{overscroll-behavior-x:contain;display:flex;gap:8px;margin-top:18px;overflow-x:auto;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.day{flex:none;min-width:64px;padding:8px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:center}
+.day b{display:block;font-family:var(--f-display);font-size:15px}
+.day span{font-size:11.5px;color:var(--muted)}
+.day[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day[aria-pressed="true"] span{color:inherit;opacity:.8}
+.day:disabled{opacity:.35;cursor:default}
+.tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0 10px;flex-wrap:wrap}
+.tools h2{font-family:var(--f-display);font-size:20px;margin:0}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{padding:6px 10px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--fg)}
+.filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.filters .chip{padding:6px 11px;font-size:12.5px}
+
+/* film card */
+.list{display:flex;flex-direction:column;gap:12px}
+.card{display:grid;grid-template-columns:92px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:12px;text-align:left;width:100%;transition:transform .15s ease,border-color .15s}
+.card:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.card:active{background:var(--surface-2)}
+.chip:active,.day:active,.btn:active{opacity:.75}
+.poster{width:92px;aspect-ratio:3/4;border-radius:12px;object-fit:cover;background:var(--surface-2);display:block;max-width:100%}
+.poster.ph{display:grid;place-items:center;font-family:var(--f-display);font-size:28px;color:var(--muted)}
+.c-body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.c-title{font-family:var(--f-display);font-weight:700;font-size:17px;line-height:1.15;margin:0;text-wrap:balance}
+.c-sub{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scores{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.score{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.score b{font-family:var(--f-mono);font-weight:800;color:var(--fg);font-size:12.5px}
+.star{color:var(--rose)}
+.verdict{display:inline-flex;align-items:center;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--v);color:#fff}
+.times{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.t{font-family:var(--f-mono);font-weight:800;font-size:13px;padding:5px 9px;border-radius:9px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--surface-2);font-variant-numeric:tabular-nums;display:inline-flex;gap:4px;align-items:center}
+.t sup{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.t.next{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.t.next sup{color:inherit;opacity:.75}
+.t.past{background:var(--surface-2);color:var(--past-fg);box-shadow:none;text-decoration:line-through}
+.t.past sup{color:inherit}
+.soon{align-self:flex-start;font-size:12px;font-weight:800;color:var(--soon-fg);background:var(--soon-bg);padding:3px 9px;border-radius:999px}
+
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:20px;padding:28px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--fg);font-family:var(--f-display);font-size:18px;margin-bottom:4px}
+.foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+
+/* sheets */
+.scrim{touch-action:none;position:fixed;inset:0;background:rgba(27,11,66,.5);z-index:20;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:560px;margin:0 auto;background:var(--surface);border-radius:24px 24px 0 0;max-height:88%;max-height:88dvh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.open{transform:none}
+.sheet.dragging{transition:none}
+#locSheet,#searchSheet{height:88%;height:88dvh}
+.sheet-head,.grab{touch-action:none;cursor:grab}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:10px auto 4px;flex:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px max(18px,env(safe-area-inset-right,0px)) 10px max(18px,env(safe-area-inset-left,0px))}
+.sheet-head h3{font-family:var(--f-display);font-size:21px;margin:0}
+.x{width:34px;height:34px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;flex:none}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1;min-height:0;padding:0 max(18px,env(safe-area-inset-right,0px)) 22px max(18px,env(safe-area-inset-left,0px))}
+.search{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:16px!important;outline:none;-webkit-appearance:none;appearance:none}
+input,select,textarea{font-size:16px!important}
+.search-wrap{position:relative}
+.search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left}
+.row:last-child{border-bottom:0}
+.row .ico{width:38px;height:38px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;flex:none}
+.row .ico.acc{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.row b{display:block;font-weight:600}
+.row span{font-size:12.5px;color:var(--muted)}
+.row .chk{margin-left:auto;color:var(--accent)}
+.group-label{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:18px 0 2px}
+.note{font-size:12.5px;color:var(--muted);background:var(--surface-2);padding:10px 12px;border-radius:12px;margin-top:10px}
+
+/* film detail */
+.d-top{display:grid;grid-template-columns:118px 1fr;gap:16px}
+.d-top .poster{width:118px;border-radius:14px}
+.d-title{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.05;margin:0 0 6px;text-wrap:balance}
+.d-meta{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.advice{margin-top:16px;border-radius:18px;padding:14px 16px;background:color-mix(in srgb,var(--v) 12%,var(--surface-2));border:1px solid color-mix(in srgb,var(--v) 35%,transparent)}
+.advice .lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--v);font-weight:700}
+.advice h4{font-family:var(--f-display);font-size:20px;margin:2px 0 6px}
+.advice p{margin:0;font-size:14px}
+.bars{display:grid;gap:10px;margin-top:14px}
+.bar-row{display:grid;grid-template-columns:92px 1fr 64px;gap:10px;align-items:center;font-size:13px}
+.bar{height:8px;border-radius:9px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:var(--accent)}
+.bar-row b{font-family:var(--f-mono);text-align:right}
+.bar-row small{grid-column:2/4;color:var(--muted);font-size:11.5px;margin-top:-6px}
+.syn{font-size:14.5px;line-height:1.55;margin:16px 0 0;max-width:65ch}
+.sec-t{font-family:var(--f-display);font-size:16px;margin:20px 0 8px}
+.sec-t.at{font-size:18px;margin-bottom:2px;text-wrap:balance}
+.sec-sub{font-size:13px;color:var(--muted);margin:0 0 10px}
+.sec-sub b{color:var(--accent);font-weight:800}
+.d-times{display:flex;flex-wrap:wrap;gap:8px}
+.d-times .t{font-size:14px;padding:8px 10px}
+.fx{font-size:9.5px;letter-spacing:.04em;padding:2px 4px;border-radius:4px;background:var(--bg);color:var(--muted)}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.pass{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line);text-decoration:none}
+.pass .pi{width:36px;height:36px;border-radius:10px;flex:none;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.pass b{display:block;font-weight:600;font-size:14px}
+.pass span{font-size:12.5px;color:var(--muted)}
+.pass .go{margin-left:auto;color:var(--muted)}
+
+@media (max-width:380px){.card{grid-template-columns:76px 1fr}.poster{width:76px}.d-top{grid-template-columns:96px 1fr}.d-top .poster{width:96px}.hero h1{font-size:24px}}
+.rotate{display:none}
+@media (orientation: landscape) and (max-height: 500px){.rotate{display:flex;position:fixed;inset:0;z-index:50;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;font-family:var(--f-display);font-size:18px}.rotate img{width:64px;height:64px;border-radius:15px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+/* ---------- v9: tabs, watchlist, history ---------- */
+#scroller{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+.view[hidden]{display:none!important}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:color-mix(in srgb,var(--surface) 94%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+.tabbar-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;font-size:11.5px;font-weight:600;color:var(--muted);position:relative}
+.tab svg{width:23px;height:23px}
+.tab[aria-selected="true"]{color:var(--accent)}
+.badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:10.5px;font-weight:700;display:grid;place-items:center;font-family:var(--f-mono)}
+.badge:empty{display:none}
+.page-h{font-family:var(--f-display);font-weight:800;font-size:28px;margin:22px 0 4px;letter-spacing:-.01em}
+.page-sub{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+.mini{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:10px;width:100%;text-align:left}
+.mini .poster{width:64px;border-radius:10px}
+.mini .poster.ph{font-size:22px}
+.mini-b{min-width:0;display:flex;flex-direction:column;gap:4px}
+.mini-t{font-family:var(--f-display);font-weight:700;font-size:16px;line-height:1.15;margin:0}
+.mini-s{font-size:12.5px;color:var(--muted)}
+.mini-next{font-size:12.5px;font-weight:600;color:var(--accent)}
+.mini-none{font-size:12.5px;color:var(--muted)}
+.icon-btn{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;color:var(--muted);background:var(--surface-2)}
+.stars{display:inline-flex;gap:2px}
+.stars button{width:30px;height:30px;display:grid;place-items:center;color:var(--line)}
+.stars button.on{color:var(--accent)}
+.stars.sm button{width:22px;height:22px}
+.stars svg{width:100%;height:100%}
+.stars.sm svg{width:17px;height:17px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.act{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 10px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);font-weight:600;font-size:13.5px}
+.act svg{width:18px;height:18px}
+.act.on{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent)}
+.rate{margin-top:10px;padding:12px 14px;border-radius:16px;background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rate span{font-size:13px;color:var(--muted)}
+.marks{display:flex;gap:6px}
+.mark{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.mark.w{color:var(--accent)}
+.mark svg{width:11px;height:11px}
+.stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.stat b{display:block;font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.chip.off{opacity:.5}
+.loading{color:var(--muted)}
+.fsearch{display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;margin:2px 0 10px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--muted);font-weight:600;font-size:15px;text-align:left}
+.fsearch svg{color:var(--accent)}
+.fres{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;padding:10px 2px;border-bottom:1px solid var(--line);text-align:left}
+.fres:last-child{border-bottom:0}
+.fres .poster{width:44px;border-radius:8px}
+.fres .poster.ph{font-size:16px}
+.fres b{display:block;font-family:var(--f-display);font-weight:700;font-size:15.5px;line-height:1.2}
+.fres span{font-size:12.5px;color:var(--muted)}
+.fres .nx{font-weight:800;font-size:12.5px;color:var(--accent);text-align:right;white-space:nowrap}
+.fres .km{font-family:var(--f-mono);font-weight:800;font-size:12px;color:var(--muted);text-align:right}
+.fhead{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;margin:4px 0 6px}
+.fhead .poster{width:56px;border-radius:9px}
+.fhead b{font-family:var(--f-display);font-weight:800;font-size:19px;line-height:1.15;display:block}
+.back{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:13.5px;color:var(--accent);margin:6px 0 8px}
+.alert{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:12px 14px;border-radius:16px;text-align:left;background:color-mix(in srgb,var(--bad) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--bad) 35%,transparent);color:var(--fg)}
+.alert .ai{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;background:var(--bad);color:#fff}
+.alert b{display:block;font-weight:800;font-size:14px}
+.alert span{font-size:12.5px;color:var(--muted)}
+.alert .go{margin-left:auto;font-weight:800;font-size:13px;color:var(--bad);flex:none}
+.special{align-self:flex-start;display:inline-flex;align-items:center;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--accent)}
+.ending{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.ending::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--bad)}
+.t.last{box-shadow:inset 0 0 0 1.5px var(--bad)}
+.t.last sup.l{color:var(--bad);opacity:1}
+.info-line{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:13.5px;color:var(--muted)}
+.info-line b{color:var(--fg);font-weight:600}
+.info-line.warn{color:var(--bad)}.info-line.warn b{color:var(--bad)}
+
+/* ---------- splash: a little clapperboard short (3.4 s) ---------- */
+#splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#1B0B42;color:#fff;overflow:hidden;transition:opacity .5s ease,transform .5s ease;padding:env(safe-area-inset-top,0px) 12px env(safe-area-inset-bottom,0px);cursor:pointer}
+#splash.out{opacity:0;transform:scale(1.05);pointer-events:none}
+#splash .grad,#splash .flash{position:absolute;inset:0;pointer-events:none}
+#splash .grad{background:linear-gradient(135deg,#6C3BF5,#FF4D8D);opacity:0;animation:sh-grad 3.4s linear both}
+#splash .flash{background:#fff;opacity:0;animation:sh-flash 3.4s linear both}
+.sh{position:relative;width:min(96vw,560px);height:auto;overflow:visible}
+.sh *{transform-box:view-box}
+.sh-light{opacity:0;animation:sh-light 3.4s linear both}
+.c-x{animation:c-x 3.4s both}
+.c-y{animation:c-y 3.4s both}
+.c-sq{transform-origin:179px 222.5px;animation:c-sq 3.4s both}
+.c-tilt{transform-origin:128px 215px;animation:c-tilt 3.4s ease-in-out both}
+.c-lid{transform-origin:40px 78px;animation:c-lid 3.4s both}
+.c-shadow{transform-box:fill-box;transform-origin:center;animation:c-shadow 3.4s both}
+.lt{transform-box:fill-box;transform-origin:50% 100%;opacity:0}
+.lt0{animation:lt-drop .6s cubic-bezier(.3,0,.4,1) 1.62s both,lt-cheer .5s ease-out 2.88s}
+.lt1{animation:lt-drop .6s cubic-bezier(.3,0,.4,1) 1.78s both,lt-cheer .5s ease-out 2.93s}
+.lt2{animation:lt-drop .6s cubic-bezier(.3,0,.4,1) 1.94s both,lt-cheer .5s ease-out 2.98s}
+.lt3{animation:lt-drop .6s cubic-bezier(.3,0,.4,1) 2.10s both,lt-cheer .5s ease-out 3.03s}
+.sh-tag{position:relative;margin:0;font-family:var(--f-body);font-weight:800;font-size:17px;opacity:0;transform:translateY(10px);animation:sh-rise .5s ease 3.05s forwards}
+.sh-skip{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:12px;font-weight:600;opacity:0;animation:sh-skip .4s ease 1s forwards}
+@keyframes sh-light{0%{opacity:0}9%{opacity:1}82%{opacity:1}86%{opacity:0}100%{opacity:0}}
+@keyframes sh-grad{0%,83%{opacity:0}87%,100%{opacity:1}}
+@keyframes sh-flash{0%,83.5%{opacity:0}85%{opacity:.85}93%,100%{opacity:0}}
+@keyframes sh-rise{to{opacity:1;transform:none}}
+@keyframes sh-skip{to{opacity:.55}}
+@keyframes c-x{0%,10%{transform:translateX(-380px)}22%{transform:translateX(-255px)}34%{transform:translateX(-128px)}46%,100%{transform:translateX(0)}}
+@keyframes c-y{
+ 0%,10%{transform:translateY(0);animation-timing-function:cubic-bezier(.2,.7,.4,1)}
+ 16%{transform:translateY(-78px);animation-timing-function:cubic-bezier(.6,0,.8,.3)}
+ 22%{transform:translateY(0);animation-timing-function:cubic-bezier(.2,.7,.4,1)}
+ 28%{transform:translateY(-64px);animation-timing-function:cubic-bezier(.6,0,.8,.3)}
+ 34%{transform:translateY(0);animation-timing-function:cubic-bezier(.2,.7,.4,1)}
+ 40%{transform:translateY(-50px);animation-timing-function:cubic-bezier(.6,0,.8,.3)}
+ 46%,73%{transform:translateY(0);animation-timing-function:cubic-bezier(.15,.75,.35,1)}
+ 79%{transform:translateY(-135px);animation-timing-function:cubic-bezier(.7,0,.9,.4)}
+ 84.5%,100%{transform:translateY(0)}}
+@keyframes c-sq{
+ 0%,10%{transform:scale(1,1)}11.5%{transform:scale(.88,1.14)}20.5%{transform:scale(.92,1.1)}23%{transform:scale(1.22,.76)}25.5%{transform:scale(1,1)}
+ 26.5%{transform:scale(.9,1.12)}32.5%{transform:scale(.92,1.1)}35%{transform:scale(1.18,.8)}37.5%{transform:scale(1,1)}
+ 38.5%{transform:scale(.92,1.1)}44.5%{transform:scale(.94,1.07)}47%{transform:scale(1.15,.83)}50%{transform:scale(1,1)}
+ 69%{transform:scale(1,1)}72.5%{transform:scale(1.18,.78)}74.5%{transform:scale(.84,1.2)}80%{transform:scale(.94,1.07)}84%{transform:scale(.96,1.04)}
+ 85.5%{transform:scale(1.32,.66)}88.5%{transform:scale(.94,1.07)}91.5%,100%{transform:scale(1,1)}}
+@keyframes c-tilt{0%,10%{transform:rotate(-8deg)}46%{transform:rotate(-8deg)}49%{transform:rotate(0)}52%{transform:rotate(-12deg)}55%{transform:rotate(-12deg)}58.5%{transform:rotate(10deg)}64%{transform:rotate(10deg)}68%{transform:rotate(0)}72.5%{transform:rotate(-7deg)}79%{transform:rotate(5deg)}84.5%,100%{transform:rotate(0)}}
+@keyframes c-lid{
+ 0%,10%{transform:rotate(0)}16%{transform:rotate(-24deg)}21.5%{transform:rotate(-6deg)}22.6%{transform:rotate(20deg)}24.5%{transform:rotate(0)}
+ 28%{transform:rotate(-24deg)}33.5%{transform:rotate(-6deg)}34.6%{transform:rotate(20deg)}36.5%{transform:rotate(0)}
+ 40%{transform:rotate(-22deg)}45.5%{transform:rotate(-6deg)}46.6%{transform:rotate(20deg)}48.5%{transform:rotate(0)}
+ 52%{transform:rotate(-14deg)}55%{transform:rotate(0)}70%{transform:rotate(0)}
+ 75%{transform:rotate(-42deg)}83.6%{transform:rotate(-42deg)}84.8%{transform:rotate(20deg)}86.2%{transform:rotate(13deg)}87.6%{transform:rotate(20deg)}91%{transform:rotate(20deg)}97%,100%{transform:rotate(0)}}
+@keyframes c-shadow{0%,10%{transform:scale(1);opacity:.45}16%{transform:scale(.55);opacity:.2}22%{transform:scale(1);opacity:.45}28%{transform:scale(.6);opacity:.22}34%{transform:scale(1);opacity:.45}40%{transform:scale(.68);opacity:.26}46%,73%{transform:scale(1);opacity:.45}79%{transform:scale(.4);opacity:.15}84.5%{transform:scale(1.15);opacity:.5}88%,100%{transform:scale(1);opacity:.3}}
+@keyframes lt-drop{0%{opacity:0;transform:translateY(-300px) scale(.9,1.12)}12%{opacity:1}62%{transform:translateY(0) scale(1.14,.84)}78%{transform:translateY(-22px) scale(.95,1.06)}90%{transform:translateY(0) scale(1.05,.95)}100%{opacity:1;transform:none}}
+@keyframes lt-cheer{0%{transform:none}35%{transform:translateY(-26px) scale(.94,1.08)}70%{transform:translateY(0) scale(1.08,.92)}100%{transform:none}}
+@media (prefers-reduced-motion: reduce){
+ #splash .grad{animation:none;opacity:1}#splash .flash,.sh-light{display:none}
+ .c-x,.c-y,.c-sq,.c-tilt,.c-lid,.c-shadow{animation:none!important}
+ .lt{animation:none!important;opacity:1}.sh-tag{animation:none;opacity:1;transform:none}}
+/* clap toast when a film goes into « À voir » */
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border-radius:999px;background:var(--grad);color:#fff;font-weight:800;font-size:14px;box-shadow:var(--shadow);transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast svg{width:30px;height:30px;overflow:visible}
+.toast .t-lid{transform-box:view-box;transform-origin:40px 78px}
+.toast.show .t-lid{animation:t-lid .6s cubic-bezier(.6,0,.2,1)}
+@keyframes t-lid{0%{transform:rotate(-10deg)}45%{transform:rotate(20deg)}60%{transform:rotate(16deg)}70%{transform:rotate(20deg)}100%{transform:rotate(0)}}
+</style>
+</head>
+<body>
+<div id="splash" aria-hidden="true"><div class="grad"></div><div class="flash"></div><svg class="sh" viewBox="0 0 640 400" role="img" aria-label="Klap">
+<defs>
+ <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <radialGradient id="pool"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+</defs>
+<g class="sh-light"><polygon points="300,-40 360,-40 560,236 100,236" fill="url(#beam)"/><ellipse cx="330" cy="228" rx="250" ry="26" fill="url(#pool)"/></g>
+<g transform="translate(250 -117.25) scale(.75)"><g class="lt lt0"><path fill="#FFFFFF" d="M69.621,303.72 L69.621,438.6 Q69.621,444.536 65.424,448.734 Q61.226,452.931 55.29,452.931 Q49.354,452.931 45.156,448.734 Q40.959,444.536 40.959,438.6 L40.959,303.72 Q40.959,297.784 45.156,293.586 Q49.354,289.389 55.29,289.389 Q61.226,289.389 65.424,293.586 Q69.621,297.784 69.621,303.72 Z"/><path fill="#FFFFFF" d="M112.431,374.746 L81.343,404.638 L113.917,426.741 Q118.829,430.075 119.945,435.905 Q121.062,441.735 117.729,446.647 Q114.395,451.559 108.565,452.675 Q102.735,453.792 97.823,450.459 L50.615,418.425 Q49.373,417.581 48.332,416.499 Q44.217,412.22 44.334,406.285 Q44.45,400.35 48.729,396.236 L92.565,354.086 Q96.844,349.971 102.779,350.088 Q108.714,350.204 112.828,354.483 Q116.943,358.762 116.826,364.697 Q116.71,370.632 112.431,374.746 Z"/></g><g class="lt lt1"><path fill="#FFFFFF" d="M155.607,303.72 L155.607,438.6 Q155.607,444.536 151.41,448.734 Q147.212,452.931 141.276,452.931 Q135.34,452.931 131.142,448.734 Q126.945,444.536 126.945,438.6 L126.945,303.72 Q126.945,297.784 131.142,293.586 Q135.34,289.389 141.276,289.389 Q147.212,289.389 151.41,293.586 Q155.607,297.784 155.607,303.72 Z"/></g><g class="lt lt2"><path fill="#FFFFFF" d="M265.197,401.508 Q265.197,422.808 250.136,437.87 Q235.074,452.931 213.774,452.931 Q192.474,452.931 177.412,437.87 Q162.351,422.808 162.351,401.508 Q162.351,380.208 177.412,365.146 Q192.474,350.085 213.774,350.085 Q235.074,350.085 250.136,365.146 Q265.197,380.208 265.197,401.508 Z M236.535,401.508 Q236.535,392.08 229.868,385.414 Q223.202,378.747 213.774,378.747 Q204.346,378.747 197.68,385.414 Q191.013,392.08 191.013,401.508 Q191.013,410.936 197.68,417.602 Q204.346,424.269 213.774,424.269 Q223.202,424.269 229.868,417.602 Q236.535,410.936 236.535,401.508 Z"/><path fill="#FFFFFF" d="M265.197,364.416 L265.197,438.6 Q265.197,444.536 261,448.734 Q256.802,452.931 250.866,452.931 Q244.93,452.931 240.732,448.734 Q236.535,444.536 236.535,438.6 L236.535,364.416 Q236.535,358.48 240.732,354.282 Q244.93,350.085 250.866,350.085 Q256.802,350.085 261,354.282 Q265.197,358.48 265.197,364.416 Z"/></g><g class="lt lt3"><path fill="#FFFFFF" d="M302.289,364.416 L302.289,492.552 Q302.289,498.488 298.092,502.686 Q293.894,506.883 287.958,506.883 Q282.022,506.883 277.824,502.686 Q273.627,498.488 273.627,492.552 L273.627,364.416 Q273.627,358.48 277.824,354.282 Q282.022,350.085 287.958,350.085 Q293.894,350.085 298.092,354.282 Q302.289,358.48 302.289,364.416 Z"/><path fill="#FFFFFF" d="M376.473,401.508 Q376.473,422.808 361.412,437.87 Q346.35,452.931 325.05,452.931 Q303.75,452.931 288.688,437.87 Q273.627,422.808 273.627,401.508 Q273.627,380.208 288.688,365.146 Q303.75,350.085 325.05,350.085 Q346.35,350.085 361.412,365.146 Q376.473,380.208 376.473,401.508 Z M347.811,401.508 Q347.811,392.08 341.144,385.414 Q334.478,378.747 325.05,378.747 Q315.622,378.747 308.956,385.414 Q302.289,392.08 302.289,401.508 Q302.289,410.936 308.956,417.602 Q315.622,424.269 325.05,424.269 Q334.478,424.269 341.144,417.602 Q347.811,410.936 347.811,401.508 Z"/></g></g>
+<g class="c-x">
+ <ellipse class="c-shadow" cx="179" cy="225" rx="58" ry="7" fill="#0b0420" opacity=".45"/>
+ <g class="c-y"><g class="c-sq">
+  <g transform="translate(100 89.2) scale(.62)"><g class="c-tilt"><path fill="#FFFFFF" d="M58,103 L198,103 C207.941,103 216,111.059 216,121 L216,197 C216,206.941 207.941,215 198,215 L58,215 C48.059,215 40,206.941 40,197 L40,121 C40,111.059 48.059,103 58,103 Z"/><path fill="#FF4D8D" d="M45,77 L56.8,77 L41.214,99.266 C40.457,98.39 40,97.248 40,96 L40,82 C40,79.239 42.239,77 45,77 Z"/><path fill="#FFFFFF" d="M56.8,77 L86.1,77 L69.3,101 L45,101 C43.487,101 42.131,100.328 41.214,99.266 Z"/><path fill="#FF4D8D" d="M86.1,77 L115.5,77 L98.7,101 L69.3,101 Z"/><path fill="#FFFFFF" d="M115.5,77 L144.8,77 L128,101 L98.7,101 Z"/><path fill="#FF4D8D" d="M144.8,77 L174.1,77 L157.3,101 L128,101 Z"/><path fill="#FFFFFF" d="M174.1,77 L203.5,77 L186.7,101 L157.3,101 Z"/><path fill="#FF4D8D" d="M203.5,77 L211,77 C213.761,77 216,79.239 216,82 L216,96 C216,98.761 213.761,101 211,101 L186.7,101 Z"/><g class="c-lid"><path fill="#FF4D8D" d="M35.806,50.858 L46.894,46.822 L39.864,73.076 C38.853,72.511 38.033,71.595 37.606,70.422 L32.818,57.266 C31.873,54.672 33.21,51.804 35.803,50.859 Z"/><path fill="#FFFFFF" d="M46.894,46.822 L74.427,36.801 L66.849,65.099 L44.014,73.411 C42.593,73.928 41.088,73.76 39.864,73.076 Z"/><path fill="#FF4D8D" d="M74.427,36.801 L102.054,26.745 L94.476,55.044 L66.849,65.099 Z"/><path fill="#FFFFFF" d="M102.054,26.745 L129.587,16.724 L122.009,45.023 L94.476,55.044 Z"/><path fill="#FF4D8D" d="M122.009,45.023 L129.587,16.724 L157.12,6.703 L149.542,35.002 L122.009,45.023 Z"/><path fill="#FFFFFF" d="M157.12,6.703 L184.747,-3.352 L177.169,24.946 L149.542,35.002 Z"/><path fill="#FF4D8D" d="M191.795,-5.917 C194.39,-6.862 197.259,-5.524 198.203,-2.929 L202.992,10.227 C203.936,12.821 202.599,15.689 200.005,16.634 L200.003,16.635 L177.169,24.946 L184.747,-3.352 Z"/></g><path fill="#2A1260" d="M53,77 C53,80.866 49.866,84 46,84 C42.134,84 39,80.866 39,77 C39,73.134 42.134,70 46,70 C49.866,70 53,73.134 53,77 Z"/><path fill="#FFFFFF" d="M49,77 C49,78.657 47.657,80 46,80 C44.343,80 43,78.657 43,77 C43,75.343 44.343,74 46,74 C47.657,74 49,75.343 49,77 Z"/><path fill="#6C3BF5" d="M97,123 L111,123 C113.209,123 115,124.791 115,127 L115,193 C115,195.209 113.209,197 111,197 L97,197 C94.791,197 93,195.209 93,193 L93,127 C93,124.791 94.791,123 97,123 Z"/><path fill="#6C3BF5" d="M105.606,154.049 L161.606,114.049 Q165.314,111.401 169.808,112.15 Q174.303,112.899 176.951,116.606 Q179.599,120.314 178.85,124.808 Q178.101,129.303 174.394,131.951 L118.394,171.951 Q114.686,174.599 110.192,173.85 Q105.697,173.101 103.049,169.394 Q100.401,165.686 101.15,161.192 Q101.899,156.697 105.606,154.049 Z"/><path fill="#6C3BF5" d="M120.707,148.281 L172.707,188.281 Q176.318,191.059 176.908,195.577 Q177.497,200.095 174.719,203.707 Q171.941,207.318 167.423,207.908 Q162.905,208.497 159.293,205.719 L107.293,165.719 Q103.682,162.941 103.092,158.423 Q102.503,153.905 105.281,150.293 Q108.059,146.682 112.577,146.092 Q117.095,145.503 120.707,148.281 Z"/></g></g>
+ </g></g>
+</g>
+</svg><p class="sh-tag">Quoi voir ce soir, et où.</p><p class="sh-skip">Touche pour passer</p></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><svg viewBox="0 -10 256 230" aria-hidden="true"><path fill="#FFFFFF" d="M58,103 L198,103 C207.941,103 216,111.059 216,121 L216,197 C216,206.941 207.941,215 198,215 L58,215 C48.059,215 40,206.941 40,197 L40,121 C40,111.059 48.059,103 58,103 Z"/><path fill="#FF4D8D" d="M45,77 L56.8,77 L41.214,99.266 C40.457,98.39 40,97.248 40,96 L40,82 C40,79.239 42.239,77 45,77 Z"/><path fill="#FFFFFF" d="M56.8,77 L86.1,77 L69.3,101 L45,101 C43.487,101 42.131,100.328 41.214,99.266 Z"/><path fill="#FF4D8D" d="M86.1,77 L115.5,77 L98.7,101 L69.3,101 Z"/><path fill="#FFFFFF" d="M115.5,77 L144.8,77 L128,101 L98.7,101 Z"/><path fill="#FF4D8D" d="M144.8,77 L174.1,77 L157.3,101 L128,101 Z"/><path fill="#FFFFFF" d="M174.1,77 L203.5,77 L186.7,101 L157.3,101 Z"/><path fill="#FF4D8D" d="M203.5,77 L211,77 C213.761,77 216,79.239 216,82 L216,96 C216,98.761 213.761,101 211,101 L186.7,101 Z"/><g class="t-lid"><path fill="#FF4D8D" d="M35.806,50.858 L46.894,46.822 L39.864,73.076 C38.853,72.511 38.033,71.595 37.606,70.422 L32.818,57.266 C31.873,54.672 33.21,51.804 35.803,50.859 Z"/><path fill="#FFFFFF" d="M46.894,46.822 L74.427,36.801 L66.849,65.099 L44.014,73.411 C42.593,73.928 41.088,73.76 39.864,73.076 Z"/><path fill="#FF4D8D" d="M74.427,36.801 L102.054,26.745 L94.476,55.044 L66.849,65.099 Z"/><path fill="#FFFFFF" d="M102.054,26.745 L129.587,16.724 L122.009,45.023 L94.476,55.044 Z"/><path fill="#FF4D8D" d="M122.009,45.023 L129.587,16.724 L157.12,6.703 L149.542,35.002 L122.009,45.023 Z"/><path fill="#FFFFFF" d="M157.12,6.703 L184.747,-3.352 L177.169,24.946 L149.542,35.002 Z"/><path fill="#FF4D8D" d="M191.795,-5.917 C194.39,-6.862 197.259,-5.524 198.203,-2.929 L202.992,10.227 C203.936,12.821 202.599,15.689 200.005,16.634 L200.003,16.635 L177.169,24.946 L184.747,-3.352 Z"/></g><path fill="#2A1260" d="M53,77 C53,80.866 49.866,84 46,84 C42.134,84 39,80.866 39,77 C39,73.134 42.134,70 46,70 C49.866,70 53,73.134 53,77 Z"/><path fill="#FFFFFF" d="M49,77 C49,78.657 47.657,80 46,80 C44.343,80 43,78.657 43,77 C43,75.343 44.343,74 46,74 C47.657,74 49,75.343 49,77 Z"/><path fill="#6C3BF5" d="M97,123 L111,123 C113.209,123 115,124.791 115,127 L115,193 C115,195.209 113.209,197 111,197 L97,197 C94.791,197 93,195.209 93,193 L93,127 C93,124.791 94.791,123 97,123 Z"/><path fill="#6C3BF5" d="M105.606,154.049 L161.606,114.049 Q165.314,111.401 169.808,112.15 Q174.303,112.899 176.951,116.606 Q179.599,120.314 178.85,124.808 Q178.101,129.303 174.394,131.951 L118.394,171.951 Q114.686,174.599 110.192,173.85 Q105.697,173.101 103.049,169.394 Q100.401,165.686 101.15,161.192 Q101.899,156.697 105.606,154.049 Z"/><path fill="#6C3BF5" d="M120.707,148.281 L172.707,188.281 Q176.318,191.059 176.908,195.577 Q177.497,200.095 174.719,203.707 Q171.941,207.318 167.423,207.908 Q162.905,208.497 159.293,205.719 L107.293,165.719 Q103.682,162.941 103.092,158.423 Q102.503,153.905 105.281,150.293 Q108.059,146.682 112.577,146.092 Q117.095,145.503 120.707,148.281 Z"/></svg><span id="toastTxt">Ajouté à « À voir »</span></div>
+<div id="scroller">
+<div class="app">
+ <div class="view" id="viewShow">
+  <header class="top">
+    <img class="logo l-light" src="logo/klap-logo-couleur.svg" alt="Klap" height="28">
+    <img class="logo l-dark" src="logo/klap-logo-sur-fonce.svg" alt="Klap" height="28">
+    <div class="clock" title="Heure actuelle"><i></i><span id="clock">--:--</span></div>
+  </header>
+  <div class="locrow">
+    <button class="loc" id="locBtn" aria-haspopup="dialog">
+      <span class="loc-txt"><span class="loc-label"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;color:var(--accent)"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="locLabel">Ma position</span></span>
+        <span class="loc-name"><span id="locName">Rennes</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></span></span>
+    </button>
+    <button class="locate" id="locateBtn" aria-label="Me localiser"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span>Me localiser</span></button>
+  </div>
+
+  <button class="fsearch" id="filmSearchBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Chercher un film…</button>
+  <section class="hero" id="hero">
+    <div class="eyebrow" id="heroEyebrow">Cinéma le plus proche</div>
+    <h1 id="cineName">Recherche des cinémas…</h1>
+    <div class="hero-meta" id="cineMeta"></div>
+    <div class="hero-actions" id="cineActions"></div>
+  </section>
+  <div class="cine-strip" id="cineStrip" role="group" aria-label="Autres cinémas"></div>
+
+  <div class="days" id="days" role="group" aria-label="Jour"></div>
+
+  <div class="tools">
+    <h2 id="listTitle">À l'affiche</h2>
+    <div class="seg" role="group" aria-label="Trier">
+      <button id="sortSoon" aria-pressed="true">Bientôt</button>
+      <button id="sortBest" aria-pressed="false">Mieux notés</button>
+    </div>
+  </div>
+  <div class="filters" id="filters" role="group" aria-label="Filtres">
+    <button class="chip" data-f="vo" aria-pressed="false">VO uniquement</button>
+    <button class="chip" data-f="good" aria-pressed="false">Bien notés (3,5+)</button>
+    <button class="chip" data-f="kids" aria-pressed="false">En famille</button>
+    <button class="chip" data-f="ending" aria-pressed="false">Bientôt plus à l'affiche</button>
+  </div>
+  <button class="alert" id="endAlert" hidden></button>
+  <div class="list" id="list"></div>
+  <p class="foot" id="foot"></p>
+ </div>
+
+ <div class="view" id="viewWatch" hidden>
+  <h1 class="page-h">À voir</h1>
+  <p class="page-sub" id="watchSub">Les films que tu as mis de côté, avec leur prochaine séance près de toi.</p>
+  <div class="list" id="watchList"></div>
+ </div>
+
+ <div class="view" id="viewSeen" hidden>
+  <h1 class="page-h">Déjà vus</h1>
+  <p class="page-sub">Tes films, avec ta propre note.</p>
+  <div id="seenStats"></div>
+  <div class="list" id="seenList"></div>
+ </div>
+</div>
+</div>
+
+<nav class="tabbar" aria-label="Navigation">
+  <div class="tabbar-in" role="tablist">
+    <button class="tab" role="tab" data-tab="Show" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 6l2-3M12 6l2-3M17 6l2-3"/></svg>Séances</button>
+    <button class="tab" role="tab" data-tab="Watch" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>À voir<span class="badge" id="watchBadge"></span></button>
+    <button class="tab" role="tab" data-tab="Seen" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Déjà vus</button>
+  </div>
+</nav>
+
+<div class="rotate" aria-hidden="true"><img src="favicon.svg" alt="">Tourne ton téléphone à la verticale</div>
+<div class="scrim" id="scrim"></div>
+
+<section class="sheet" id="locSheet" role="dialog" aria-modal="true" aria-labelledby="locTitle">
+  <div class="grab"></div>
+  <div class="sheet-head"><h3 id="locTitle">Changer de position</h3><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <div class="search-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="search" id="locSearch" type="search" placeholder="Ville, code postal ou cinéma" autocomplete="off" enterkeyhint="search"></div>
+    <button class="row" id="gpsBtn"><span class="ico acc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg></span><span><b>Autour de moi</b><span id="gpsState">Utiliser la position du téléphone</span></span></button>
+    
+    <div id="locList"></div>
+  </div>
+</section>
+
+<section class="sheet" id="searchSheet" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+  <div class="grab"></div>
+  <div class="sheet-head"><h3 id="searchTitle">Chercher un film</h3><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <div class="search-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="search" id="filmQ" type="search" placeholder="Dune, Scrooge, Le Corset…" autocomplete="off" enterkeyhint="search"></div>
+    <div id="filmRes"></div>
+  </div>
+</section>
+
+<section class="sheet" id="gpsSheet" role="dialog" aria-modal="true" aria-labelledby="gpsTitle">
+  <div class="grab"></div>
+  <div class="sheet-head"><h3 id="gpsTitle">Activer la localisation</h3><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body">
+    <p class="page-sub" style="margin-top:0">Ton iPhone bloque la position pour Klap, donc il ne pose plus la question. À régler <b>une seule fois</b> :</p>
+    <ol class="steps">
+      <li><b>Réglages</b> › <b>Confidentialité et sécurité</b> › <b>Service de localisation</b> : activé. Plus bas, <b>Sites web Safari</b> › <b>Lorsque l'app est active</b>.</li>
+      <li><b>Réglages</b> › <b>Apps</b> › <b>Safari</b> › <b>Position</b> › <b>Autoriser</b>. <span>(iPhone plus ancien : Réglages › Safari › Position)</span></li>
+      <li>Ferme Klap complètement, rouvre-la et touche <b>Me localiser</b>.</li>
+    </ol>
+    <button class="btn primary" style="width:100%;justify-content:center;margin-top:8px" data-close>J'ai compris</button>
+  </div>
+</section>
+
+<section class="sheet" id="filmSheet" role="dialog" aria-modal="true" aria-label="Fiche du film">
+  <div class="grab"></div>
+  <div class="sheet-head"><span class="eyebrow" id="filmCine"></span><button class="x" data-close aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body" id="filmBody"></div>
+</section>
+
+<script>
+(() => {
+const VERSION = 24;
+const QUICK = [["Paris",48.8566,2.3522],["Lyon",45.764,4.8357],["Marseille",43.2965,5.3698],["Toulouse",43.6047,1.4442],["Bordeaux",44.8378,-0.5792],["Nantes",47.2184,-1.5536],["Lille",50.6292,3.0573],["Rennes",48.1113,-1.68]];
+const FX = {DOLBY_CINEMA:"DOLBY", E_4DX:"4DX", ICE:"ICE", LASER:"LASER", PLF:"GRAND ÉCRAN", F_4K:"4K", LUXURY:"CONFORT", DOLBY_ATMOS:"ATMOS", IMAX:"IMAX", E_3D:"3D"};
+const KIDS = /Animation|Famille/;
+const passCulture = q => `https://passculture.app/recherche/resultats?query=${encodeURIComponent('"'+q+'"')}&offerCategories=${encodeURIComponent('["CINEMA"]')}`;
+const posterSrc = m => m && (m.img || (m.p ? "https://fr.web.img6.acsta.net/c_215_290" + m.p : null));
+window.posterFail = img => { const d=document.createElement("div"); d.className="poster ph"; d.textContent=img.alt ? img.alt[0] : "?"; img.replaceWith(d); };
+const $ = id => document.getElementById(id);
+const store = { get(k){try{return JSON.parse(localStorage.getItem("seance:"+k))}catch(e){return null}}, set(k,v){try{localStorage.setItem("seance:"+k,JSON.stringify(v))}catch(e){}} };
+const ICON = {
+  star:`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`,
+  save:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>`,
+  saved:`<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>`,
+  eye:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  check:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>`,
+  trash:`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`,
+  pin:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`,
+  film:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>`,
+  clock:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  ok:`<svg class="chk" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="m5 12 5 5 9-10"/></svg>`
+};
+
+let INDEX = null;           // every cinema in France (cinemas.json)
+const DEP = {}, DEP_P = {};  // department showtimes, loaded on demand
+let DATA = null;            // what is on screen: nearby cinemas + their films
+let WATCH = store.get("watch") || {};   // id -> {m, added}
+let SEEN  = store.get("seen")  || {};   // id -> {m, rating, date}
+const savedLoc = (l=>l && l.kind==="approx" ? null : l)(store.get("loc"));
+const state = { loc: savedLoc || {kind:"city", name:"Rennes", lat:48.1113, lng:-1.6800}, cine:null, day:null, sort:"soon", tab:"Show", f:{vo:false,good:false,kids:false,ending:false} };
+
+/* ---------- helpers ---------- */
+const pad = n => String(n).padStart(2,"0");
+const isoDay = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const nowMin = () => { const d=new Date(); return d.getHours()*60+d.getMinutes(); };
+const toMin = h => +h.slice(0,2)*60 + +h.slice(3,5);
+const fr1 = x => x==null ? "–" : x.toFixed(1).replace(".",",");
+const nf = new Intl.NumberFormat("fr-FR");
+function km(a,b){const R=6371,r=Math.PI/180,dl=(b.lat-a.lat)*r,dg=(b.lng-a.lng)*r;const x=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+const fmtKm = d => d<1 ? `${Math.round(d*1000/10)*10} m` : `${d<10?d.toFixed(1).replace(".",","):Math.round(d)} km`;
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+function dayLabel(iso){const t=isoDay(new Date());const tm=new Date();tm.setDate(tm.getDate()+1);
+  const d=new Date(iso+"T12:00:00");
+  const top = iso===t ? "Auj." : iso===isoDay(tm) ? "Demain" : d.toLocaleDateString("fr-FR",{weekday:"short"}).replace(".","");
+  return {top: top[0].toUpperCase()+top.slice(1), sub: d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"}).replace(".","")};}
+const dayShort = iso => { const t=isoDay(new Date()); const tm=new Date(); tm.setDate(tm.getDate()+1); if(iso===t) return "ce soir"; if(iso===isoDay(tm)) return "demain"; return new Date(iso+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"short"}).replace(".",""); };
+function inMin(m){ if(m<60) return `dans ${m} min`; const h=Math.floor(m/60), r=m%60; return `dans ${h} h${r?" "+pad(r):""}`; }
+const posterImg = (m,cls="poster") => posterSrc(m) ? `<img class="${cls}" src="${posterSrc(m)}" alt="${esc(m.t)}" loading="lazy" referrerpolicy="no-referrer" onerror="posterFail(this)">` : `<div class="${cls} ph">${esc(((m&&m.t)||"?")[0])}</div>`;
+const starsHtml = (n, id, sm) => `<span class="stars${sm?" sm":""}">${[1,2,3,4,5].map(i=>`<button data-rate="${id}" data-n="${i}" class="${i<=n?"on":""}" aria-label="${i} sur 5">${ICON.star}</button>`).join("")}</span>`;
+
+/* ---------- verdict ---------- */
+function verdict(m){
+  const p=m.pr, u=m.u, pc=m.pc||0, uc=m.uc||0;
+  if(p==null && (u==null || uc<15)) return {key:"none", label:"Pas encore noté", color:"var(--none)", score:null,
+    title:"Trop tôt pour juger", text:"Le film n'a pas encore assez de notes pour qu'on puisse le recommander. Fie-toi au synopsis et à la bande-annonce."};
+  const wu = u==null ? 0 : Math.min(1, uc/200)*0.5;
+  const wp = p==null ? 0 : Math.min(1, pc/8)*0.5;
+  const s = (wp+wu) ? ((p??0)*wp + (u??0)*wu)/(wp+wu) : (p??u);
+  let v;
+  if(s>=4.1) v={key:"must",label:"Incontournable",color:"var(--v-must)",title:"Fonce, c'est un grand film"};
+  else if(s>=3.6) v={key:"great",label:"Très bon choix",color:"var(--v-great)",title:"Très bon choix"};
+  else if(s>=3.1) v={key:"good",label:"Bon film",color:"var(--v-good)",title:"Une bonne séance"};
+  else if(s>=2.6) v={key:"mixed",label:"Mitigé",color:"var(--v-mixed)",title:"Avis partagés"};
+  else v={key:"bad",label:"À éviter",color:"var(--v-bad)",title:"Plutôt à éviter"};
+  const parts=[];
+  if(p!=null && u!=null){
+    const gap=u-p;
+    if(Math.abs(gap)<0.5) parts.push(`La presse (${fr1(p)}/5) et le public (${fr1(u)}/5) sont d'accord.`);
+    else if(gap>0) parts.push(`Le public (${fr1(u)}/5) l'aime bien plus que la presse (${fr1(p)}/5) : un film qui plaît en salle plus qu'aux critiques.`);
+    else parts.push(`La presse (${fr1(p)}/5) est plus enthousiaste que le public (${fr1(u)}/5) : plutôt un film d'auteur ou exigeant.`);
+  } else if(p!=null) parts.push(`Seule la presse l'a noté pour l'instant : ${fr1(p)}/5 sur ${pc} critique${pc>1?"s":""}.`);
+  else parts.push(`Le public lui donne ${fr1(u)}/5 sur ${nf.format(uc)} notes. Pas encore de critiques presse.`);
+  const tail = {must:"Une des meilleures séances du moment.", great:"Tu devrais passer un très bon moment.", good:"Une séance solide, surtout si le genre te plaît.", mixed:"À voir si le sujet t'attire vraiment.", bad:"Les notes sont mauvaises des deux côtés : il y a sûrement mieux à l'affiche."}[v.key];
+  parts.push(tail);
+  return {...v, score:s, text:parts.join(" ")};
+}
+
+/* ---------- data: all of France, loaded around you ---------- */
+function getDep(d){
+  if(!DEP_P[d]) DEP_P[d] = fetch(`data/${d}.json`).then(r=>r.ok?r.json():null).then(x=>{DEP[d]=x;}).catch(()=>{DEP[d]=null;});
+  return DEP_P[d];
+}
+async function loadNearby(){
+  const near = INDEX.map(c=>({...c, dist:km(state.loc,c)})).sort((a,b)=>a.dist-b.dist);
+  let pick = near.filter(c=>c.dist<=30).slice(0,40);
+  if(pick.length<10) pick = near.slice(0,10);
+  if(state.cine && !pick.some(c=>c.id===state.cine)){ const c=near.find(x=>x.id===state.cine); if(c) pick.push(c); }
+  const deps = [...new Set(pick.map(c=>c.dep))];
+  await Promise.all(deps.map(getDep));
+  const movies={}; let days=[], updated=null;
+  deps.forEach(d=>{ const x=DEP[d]; if(!x) return; Object.assign(movies,x.movies); if(x.days.length>days.length) days=x.days; if(!updated||x.updated>updated) updated=x.updated; });
+  DATA = {days, movies, updated, cinemas: pick.map(c=>({...c, days:(DEP[c.dep] && DEP[c.dep].cinemas[c.id]) || {}}))};
+}
+const hasShows = c => Object.keys(c.days).length>0;
+/* « bientôt fini » : the film was running, and the cinema already published later days without it.
+   One or two isolated days in mid-week = a special screening (re-release, kids' show, preview), not a departure. */
+function endInfo(c, id){
+  const today=isoDay(new Date());
+  const ds=Object.keys(c.days).filter(d=>d>=today).sort(); if(!ds.length) return null;
+  const mine=ds.filter(d=>c.days[d][id]); if(!mine.length) return null;
+  if(mine.length<=2 && mine[0]>ds[0]) return {special:true};
+  const last=mine[mine.length-1];
+  if(last>=ds[ds.length-1]) return null;          // still there on the last published day
+  // to be sure, the cinema must have published at least two full days after it without the film
+  // (a film missing only on a Monday is often just a day off, not a departure)
+  const peak=Math.max(...ds.map(d=>Object.keys(c.days[d]).length));
+  const fullAfter=ds.filter(d=>d>last && Object.keys(c.days[d]).length>=0.6*peak).length;
+  if(fullAfter<2) return null;
+  const ss=c.days[last][id]; return {day:last, h:ss[ss.length-1].h};
+}
+const isLeaving = e => e && !e.special;
+function cinemasByDistance(){ return DATA.cinemas.map(c=>({...c, dist:km(state.loc,c)})).sort((a,b)=>a.dist-b.dist); }
+function availableDays(){ const today=isoDay(new Date()); return DATA.days.filter(d=>d>=today); }
+function sessionsFor(c, day){
+  const entries = Object.entries(c.days[day]||{});
+  const isToday = day===isoDay(new Date()); const nm=nowMin();
+  return entries.map(([id,ss])=>{
+    const m=DATA.movies[id]; if(!m) return null; let list=ss;
+    if(state.f.vo) list=list.filter(s=>s.v==="VO");
+    const upcoming = isToday ? list.filter(s=>toMin(s.h)>=nm-5) : list;
+    return {id, m, v:verdict(m), all:list, upcoming, next: upcoming[0], end:endInfo(c,id)};
+  }).filter(x=>x && x.all.length && x.upcoming.length)
+    .filter(x=>!state.f.good || (x.v.score!=null && x.v.score>=3.5))
+    .filter(x=>!state.f.kids || KIDS.test((x.m.g||[]).join(" ")))
+    .filter(x=>!state.f.ending || isLeaving(x.end));
+}
+/* next showing of a film in the cinemas around you */
+function nextShowing(id){
+  if(!DATA) return null;
+  const today=isoDay(new Date()), nm=nowMin(); let best=null, count=0;
+  for(const c of cinemasByDistance()){
+    let found=null;
+    for(const d of DATA.days){ if(d<today) continue;
+      const ss=(c.days[d]||{})[id]; if(!ss) continue;
+      const s=ss.find(s=>d!==today || toMin(s.h)>=nm-5); if(s){ found={c,d,s}; break; } }
+    if(found){ count++; if(!best || found.d<best.d || (found.d===best.d && found.s.h<best.s.h && found.c.dist<best.c.dist+15)) best=found; }
+  }
+  return best ? {...best, count} : null;
+}
+
+/* ---------- render: Séances ---------- */
+function renderTop(){
+  $("locName").textContent = state.loc.name;
+  $("locLabel").textContent = state.loc.kind==="gps" ? "Autour de moi" : state.loc.kind==="approx" ? "Autour de moi · approx." : "Ma position";
+}
+function renderHero(){
+  const list = cinemasByDistance();
+  if(!state.cine || !list.find(c=>c.id===state.cine)) state.cine = (list.find(hasShows) || list[0]).id;
+  const c = list.find(x=>x.id===state.cine);
+  const nearest = c.id===(list.find(hasShows)||list[0]).id;
+  $("heroEyebrow").textContent = !nearest ? "Cinéma choisi" : "Cinéma le plus proche";
+  $("cineName").textContent = c.name;
+  $("cineMeta").innerHTML = `<span><b>${fmtKm(c.dist)}</b> de ${esc(state.loc.name)}</span><span>${esc(c.addr||c.town)}</span>`;
+  const maps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name+" "+(c.addr||c.town))}`;
+  $("cineActions").innerHTML = `<a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+    <a class="btn" href="${maps}" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-8-8 18-2-8z"/></svg>Itinéraire</a>
+    <a class="btn" href="${passCulture(c.name)}" target="_blank" rel="noopener">pass Culture</a>`;
+  $("cineStrip").innerHTML = list.slice(0,12).map(x=>`<button class="chip${hasShows(x)?"":" off"}" data-cine="${x.id}" aria-pressed="${x.id===c.id}">${esc(x.name)} <small>${fmtKm(x.dist)}</small></button>`).join("");
+  return c;
+}
+function renderDays(c){
+  const days = availableDays();
+  if(!state.day || !days.includes(state.day)) state.day = days.find(d=>sessionsFor(c,d).length) || days[0];
+  $("days").innerHTML = days.map(d=>{const l=dayLabel(d);const has=Object.keys(c.days[d]||{}).length>0;
+    return `<button class="day" data-day="${d}" aria-pressed="${d===state.day}" ${has?"":"disabled"}><b>${l.top}</b><span>${l.sub}</span></button>`}).join("");
+}
+function marks(id){
+  const w=WATCH[id], s=SEEN[id];
+  if(!w && !s) return "";
+  return `<span class="marks">${w?`<span class="mark w">${ICON.saved} À voir</span>`:""}${s?`<span class="mark">${ICON.check} Vu${s.rating?` · ${s.rating}★`:""}</span>`:""}</span>`;
+}
+function card(x){
+  const m=x.m, v=x.v, isToday=state.day===isoDay(new Date()), nm=nowMin();
+  const lastHere = isLeaving(x.end) && x.end.day===state.day ? x.end.h : null;
+  const times = x.all.map(s=>{const past=isToday && toMin(s.h)<nm-5; const next=s===x.next && isToday; const last=s.h===lastHere;
+    return `<span class="t${past?" past":""}${next?" next":""}${last?" last":""}">${s.h}${s.v==="VO"?"<sup>VO</sup>":""}${last?'<sup class="l">DERNIÈRE</sup>':""}</span>`}).join("");
+  const endBadge = !x.end ? "" : x.end.special ? `<span class="special">Séance spéciale</span>`
+    : `<span class="ending">${x.end.day===isoDay(new Date())?"Dernier jour":"Jusqu'à "+dayShort(x.end.day)}</span>`;
+  const soon = isToday && x.next ? `<span class="soon">Prochaine ${inMin(Math.max(0,toMin(x.next.h)-nm))}</span>` : "";
+  return `<button class="card" data-film="${x.id}">
+    ${posterImg(m)}
+    <div class="c-body">
+      <h3 class="c-title">${esc(m.t)}</h3>
+      <div class="c-sub">${esc([m.rt&&m.rt!=="0h 00min"?m.rt.replace(" ",""):null,(m.g||[]).slice(0,2).join(", ")].filter(Boolean).join(" · "))}</div>
+      <div class="scores">
+        <span class="verdict" style="--v:${v.color}">${v.label}</span>
+        ${m.pr!=null?`<span class="score">Presse <b>${fr1(m.pr)}</b></span>`:""}
+        ${m.u!=null?`<span class="score">Public <b>${fr1(m.u)}</b><span class="star">★</span></span>`:""}
+      </div>
+      ${endBadge}
+      ${marks(x.id)}
+      ${soon}
+      <div class="times">${times}</div>
+    </div></button>`;
+}
+function renderList(c){
+  let items = sessionsFor(c, state.day);
+  if(state.sort==="best") items.sort((a,b)=>(b.v.score??-1)-(a.v.score??-1));
+  else items.sort((a,b)=>toMin(a.next.h)-toMin(b.next.h));
+  const isToday = state.day===isoDay(new Date());
+  $("listTitle").textContent = isToday ? "Encore aujourd'hui" : "À l'affiche";
+  if(!availableDays().length){
+    $("list").innerHTML = `<div class="empty"><b>Séances en cours de mise à jour</b>Les horaires de la semaine arrivent dans quelques minutes. Reviens un peu plus tard.</div>`;
+    $("endAlert").hidden=true; return;
+  }
+  if(!hasShows(c)){
+    const covered = DEP[c.dep] != null;
+    $("list").innerHTML = `<div class="empty"><b>${covered?"Pas de séance publiée":"Séances pas encore dans Klap"}</b>${covered?"Ce cinéma ne publie pas ses horaires en ce moment.":"Klap n'affiche pas encore les horaires de cette zone, mais tu peux les voir directement."}<div style="margin-top:14px"><a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Voir les séances de ce cinéma</a></div></div>`;
+  } else if(!items.length){
+    const any = Object.keys(c.days[state.day]||{}).length;
+    $("list").innerHTML = `<div class="empty"><b>${any? "Plus rien ce jour-là" : "Pas de séance"}</b>${any && isToday ? "Les séances d'aujourd'hui sont passées ou ne correspondent pas aux filtres. Regarde demain." : "Essaie un autre jour, un autre cinéma ou enlève un filtre."}</div>`;
+  } else $("list").innerHTML = items.map(card).join("");
+  // films about to leave this cinema (it already published later days without them)
+  const today=isoDay(new Date());
+  const leaving = hasShows(c) ? Object.keys(Object.assign({}, ...Object.values(c.days)))
+      .map(id=>({id, e:endInfo(c,id), m:DATA.movies[id]})).filter(x=>isLeaving(x.e) && x.e.day>=today && x.m && nextIn(c,x.id)) : [];   // only films you can still go and see
+  const al=$("endAlert");
+  if(!leaving.length){ al.hidden=true; }
+  else {
+    leaving.sort((a,b)=>a.e.day.localeCompare(b.e.day));
+    const names = leaving.slice(0,2).map(x=>x.m.t).join(", ") + (leaving.length>2?` et ${leaving.length-2} autre${leaving.length>3?"s":""}`:"");
+    al.hidden=false;
+    al.innerHTML = state.f.ending
+      ? `<span class="ai"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><b>Films qui partent bientôt</b><span>Seuls ceux-là sont affichés.</span></span><span class="go">Tout voir</span>`
+      : `<span class="ai"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><b>${leaving.length} film${leaving.length>1?"s quittent":" quitte"} bientôt ce cinéma</b><span>${esc(names)}</span></span><span class="go">Voir</span>`;
+  }
+  const up = DATA.updated ? new Date(DATA.updated) : null;
+  $("foot").innerHTML = `<b style="font-family:var(--f-display);color:var(--fg)">Klap</b> · Séances, notes presse et spectateurs : AlloCiné.<br>Version ${VERSION}${up?` · Données mises à jour le ${up.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} à ${pad(up.getHours())}h${pad(up.getMinutes())}`:""}.`;
+}
+function renderShow(){
+  if(!DATA || !DATA.cinemas.length) return;
+  const keep=["cineStrip","days"].map(id=>[id,$(id).scrollLeft]);
+  renderTop(); const c=renderHero(); renderDays(c); renderList(c);
+  keep.forEach(([id,x])=>{ $(id).scrollLeft=x; });
+}
+
+/* ---------- render: À voir ---------- */
+function renderWatch(){
+  const ids = Object.keys(WATCH);
+  $("watchBadge").textContent = ids.length || "";
+  if(state.tab!=="Watch") return;
+  if(!ids.length){ $("watchList").innerHTML = `<div class="empty"><b>Ta liste est vide</b>Ouvre un film et touche « À voir » pour le garder ici. Klap te montrera sa prochaine séance près de toi.</div>`; return; }
+  const rows = ids.map(id=>({id, w:WATCH[id], n:nextShowing(id)}))
+    .sort((a,b)=> (a.n?0:1)-(b.n?0:1) || (a.n&&b.n ? (a.n.d+a.n.s.h).localeCompare(b.n.d+b.n.s.h) : b.w.added-a.w.added));
+  $("watchList").innerHTML = rows.map(({id,w,n})=>{
+    const m = (DATA && DATA.movies[id]) || w.m; const l = n && dayLabel(n.d);
+    const e0 = n && endInfo(n.c, id); const e = isLeaving(e0) ? e0 : null;
+    const nxt = n ? `<span class="mini-next">${l.top} ${n.s.h}${n.s.v==="VO"?" (VO)":""} · ${esc(n.c.name)}</span><span class="mini-s">${fmtKm(n.c.dist)}${n.count>1?` · dans ${n.count} cinémas`:""}</span>${e?`<span class="ending">${e.day===isoDay(new Date())?"Dernier jour ici":"Jusqu'à "+dayShort(e.day)}</span>`:""}`
+                  : `<span class="mini-none">Pas de séance près de toi pour l'instant</span>`;
+    return `<div class="mini" data-film="${id}" ${n?`data-cine2="${n.c.id}" data-day2="${n.d}"`:""} role="button" tabindex="0">
+      ${posterImg(m)}
+      <div class="mini-b"><h3 class="mini-t">${esc(m.t)}</h3>${nxt}</div>
+      <button class="icon-btn" data-unwatch="${id}" aria-label="Retirer de la liste">${ICON.trash}</button></div>`;
+  }).join("");
+}
+
+/* ---------- render: Déjà vus ---------- */
+function renderSeen(){
+  if(state.tab!=="Seen") return;
+  const rows = Object.entries(SEEN).sort((a,b)=>b[1].date-a[1].date);
+  if(!rows.length){ $("seenStats").innerHTML=""; $("seenList").innerHTML = `<div class="empty"><b>Aucun film pour l'instant</b>Après une séance, ouvre le film et touche « Je l'ai vu » pour le noter.</div>`; return; }
+  const rated = rows.filter(([,s])=>s.rating);
+  const avg = rated.length ? rated.reduce((t,[,s])=>t+s.rating,0)/rated.length : null;
+  $("seenStats").innerHTML = `<div class="stat-row"><div class="stat"><b>${rows.length}</b><span>film${rows.length>1?"s":""} vu${rows.length>1?"s":""}</span></div><div class="stat"><b>${avg?fr1(avg)+" ★":"–"}</b><span>ta note moyenne</span></div></div>`;
+  $("seenList").innerHTML = rows.map(([id,s])=>`<div class="mini" data-film="${id}" role="button" tabindex="0">
+      ${posterImg(s.m)}
+      <div class="mini-b"><h3 class="mini-t">${esc(s.m.t)}</h3>
+        <span class="mini-s">Vu le ${new Date(s.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</span>
+        ${starsHtml(s.rating||0, id, true)}</div>
+      <button class="icon-btn" data-unseen="${id}" aria-label="Retirer de l'historique">${ICON.trash}</button></div>`).join("");
+}
+function renderAll(){ renderShow(); renderWatch(); renderSeen(); }
+function setTab(t){
+  state.tab=t;
+  ["Show","Watch","Seen"].forEach(x=>{ $("view"+x).hidden = x!==t; });
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===t));
+  $("scroller").scrollTop=0; renderAll();
+}
+
+/* ---------- film sheet ---------- */
+let FILM=null;
+function filmActions(id){
+  const w=!!WATCH[id], s=SEEN[id];
+  return `<div class="acts">
+      <button class="act${w?" on":""}" data-watch="${id}">${w?ICON.saved:ICON.save}${w?"Dans ma liste":"À voir"}</button>
+      <button class="act${s?" on":""}" data-seen="${id}">${s?ICON.check:ICON.eye}${s?"Vu":"Je l'ai vu"}</button>
+    </div>
+    ${s?`<div class="rate"><span>${s.rating?"Ta note":"Note ce film"}</span>${starsHtml(s.rating||0,id)}</div>`:""}`;
+}
+function openFilm(id, ctx){
+  const cid = (ctx&&ctx.cine) || state.cine, day = (ctx&&ctx.day) || state.day;
+  const c = (DATA && DATA.cinemas.find(x=>x.id===cid)) || cineObj(cid);
+  const m = getMovie(id);
+  if(!m) return;
+  FILM={id, m}; const v=verdict(m);
+  const isToday=day===isoDay(new Date()), nm=nowMin();
+  const ss=(c && c.days[day] && c.days[day][id]) || []; const next=ss.find(s=>!isToday||toMin(s.h)>=nm-5);
+  const l=day ? dayLabel(day) : null;
+  $("filmCine").textContent = ss.length ? `${c.name} · ${l.top} ${l.sub}` : "Fiche du film";
+  const bar=(lbl,val,cnt,unit)=> val==null ? "" : `<div class="bar-row"><span>${lbl}</span><div class="bar"><i style="width:${val/5*100}%"></i></div><b>${fr1(val)}/5</b><small>${nf.format(cnt||0)} ${unit}</small></div>`;
+  $("filmBody").innerHTML = `
+    <div class="d-top">
+      ${posterImg(m)}
+      <div>
+        <h2 class="d-title">${esc(m.t)}</h2>
+        <div class="d-meta">
+          ${m.ot&&m.ot!==m.t?`<span>${esc(m.ot)}</span>`:""}
+          <span>${esc([m.rt&&m.rt!=="0h 00min"?m.rt:null,(m.g||[]).join(", ")].filter(Boolean).join(" · "))}</span>
+          ${m.d?`<span>De <b>${esc(m.d)}</b></span>`:""}
+          ${m.c&&m.c.length?`<span>Avec ${esc(m.c.join(", "))}</span>`:""}
+          ${m.ce?`<span>${esc(m.ce)}</span>`:""}
+        </div>
+      </div>
+    </div>
+    ${(()=>{ const e=c&&endInfo(c,id); let out="";
+      if(e && e.special) out+=`<div class="info-line">${'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none;margin-top:2px"><path d="M12 3l2.6 5.6 6 .6-4.5 4 1.3 6L12 16.3 6.6 19.2l1.3-6-4.5-4 6-.6z"/></svg>'}<span><b>Séance spéciale ici :</b> ce film n'est programmé qu'un ou deux jours cette semaine.</span></div>`;
+      else if(e) out+=`<div class="info-line warn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> <span><b>Bientôt plus à l'affiche ici :</b> dernière séance ${dayShort(e.day)} à ${e.h}.</span></div>`;
+      if(m.rd){ const rd=new Date(m.rd+"T12:00:00"), now=new Date(); const w=Math.floor((now-rd)/(7*864e5));
+        out+= rd>now ? `<div class="info-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none;margin-top:2px"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> <span>Sortie le <b>${rd.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</b> : séances en avant-première.</span></div>`
+          : `<div class="info-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none;margin-top:2px"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg> <span>Sorti le <b>${rd.toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</b> · ${w<1?"cette semaine":`à l'affiche depuis ${w} semaine${w>1?"s":""}`}${w>=5&&!isLeaving(e)&&!(e&&e.special)?" : il pourrait bientôt quitter les salles":""}.</span></div>`; }
+      return out; })()}
+    <div id="filmActs">${filmActions(id)}</div>
+    <div class="advice" style="--v:${v.color}">
+      <div class="lbl">Mon conseil · ${v.label}${v.score!=null?` · ${fr1(v.score)}/5`:""}</div>
+      <h4>${v.title}</h4><p>${v.text}</p>
+    </div>
+    <div class="bars">${bar("Presse",m.pr,m.pc,(m.pc>1?"critiques":"critique"))}${bar("Spectateurs",m.u,m.uc,"notes")}</div>
+    ${m.s?`<p class="syn">${esc(m.s)}</p>`:""}
+    ${ss.length?`<h4 class="sec-t at">Séances au ${esc(c.name)}</h4><p class="sec-sub"><b>${l.top==="Auj."?"Aujourd'hui":l.top} ${l.sub}</b> · ${esc(c.town||"")}${c.dist!=null?` · à ${fmtKm(c.dist)} de ${esc(state.loc.name)}`:""}</p>
+    <div class="d-times">${ss.map(s=>{const past=isToday&&toMin(s.h)<nm-5;
+      return `<span class="t${past?" past":""}${s===next&&isToday?" next":""}">${s.h}<sup>${s.v}</sup>${(s.fx||[]).map(f=>FX[f]?`<span class="fx">${FX[f]}</span>`:"").join("")}</span>`}).join("")}</div>`
+    : `<h4 class="sec-t">Séances</h4><p class="mini-none">${c?`Pas de séance de ce film au ${esc(c.name)} pour l'instant.`:"Pas de séance de ce film près de toi pour l'instant."}</p>`}
+    <div class="links">
+      ${ss.length?`<a class="btn primary" href="https://www.allocine.fr/seance/salle_gen_csalle=${c.id}.html" target="_blank" rel="noopener">Réserver au ${esc(c.name)}</a>`:""}
+      <a class="btn" href="https://www.allocine.fr/film/fichefilm_gen_cfilm=${id}.html" target="_blank" rel="noopener">Critiques complètes</a>
+      <a class="btn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(m.t+" bande annonce")}" target="_blank" rel="noopener">Bande-annonce</a>
+    </div>
+    <a class="pass" href="${passCulture(m.t)}" target="_blank" rel="noopener">
+      <span class="pi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg></span>
+      <span><b>Tu as entre 15 et 21 ans ?</b><span>Réserve ce film avec ton pass Culture</span></span>
+      <svg class="go" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+    </a>`;
+  $("filmBody").scrollTop=0; openSheet("filmSheet");
+}
+function refreshFilmActs(){ if(FILM && $("filmActs")) $("filmActs").innerHTML = filmActions(FILM.id); }
+const slim = m => ({t:m.t, ot:m.ot, p:m.p, rt:m.rt, g:m.g, d:m.d, c:m.c, s:m.s, u:m.u, uc:m.uc, pr:m.pr, pc:m.pc, ce:m.ce, rd:m.rd});
+function toggleWatch(id){
+  if(WATCH[id]){ delete WATCH[id]; toast("Retiré de « À voir »"); } else { const m=(DATA&&DATA.movies[id])||(SEEN[id]&&SEEN[id].m)||(FILM&&FILM.m); WATCH[id]={m:slim(m), added:Date.now()}; toast("Ajouté à « À voir »"); }
+  store.set("watch",WATCH); refreshFilmActs(); renderAll();
+}
+function toggleSeen(id){
+  if(SEEN[id]) delete SEEN[id];
+  else { const m=(DATA&&DATA.movies[id])||(WATCH[id]&&WATCH[id].m)||(FILM&&FILM.m); SEEN[id]={m:slim(m), rating:0, date:Date.now()}; delete WATCH[id]; store.set("watch",WATCH); }
+  store.set("seen",SEEN); refreshFilmActs(); renderAll();
+}
+function rate(id,n){ if(!SEEN[id]) return; SEEN[id].rating = SEEN[id].rating===n ? 0 : n; store.set("seen",SEEN); refreshFilmActs(); renderSeen(); if(state.tab==="Show") renderShow(); }
+
+/* ---------- « Chercher un film » : every cinema that shows it, nearest first ---------- */
+let FILMS=null;
+function getFilms(){ if(!FILMS) FILMS=fetch("data/films.json").then(r=>r.ok?r.json():{}).catch(()=>({})); return FILMS; }
+function getMovie(id){
+  if(DATA && DATA.movies[id]) return DATA.movies[id];
+  for(const d of Object.values(DEP)) if(d && d.movies && d.movies[id]) return d.movies[id];
+  return (WATCH[id]&&WATCH[id].m) || (SEEN[id]&&SEEN[id].m) || (FILMS_SYNC && FILMS_SYNC[id]) || null;
+}
+let FILMS_SYNC=null;
+function cineObj(cid){
+  const x=INDEX && INDEX.find(c=>c.id===cid); if(!x) return null;
+  return {...x, dist:km(state.loc,x), days:(DEP[x.dep] && DEP[x.dep].cinemas[cid]) || {}};
+}
+function nextIn(c, id){
+  const today=isoDay(new Date()), nm=nowMin();
+  for(const d of Object.keys(c.days).sort()){ if(d<today) continue; const ss=c.days[d][id]; if(!ss) continue;
+    const s=ss.find(s=>d!==today || toMin(s.h)>=nm-5); if(s) return {d,s}; }
+  return null;
+}
+async function searchFilms(q){
+  const films = FILMS_SYNC = await getFilms(); const qq=norm(q.trim());
+  if(qq.length<2){ $("filmRes").innerHTML = `<div class="note">Tape au moins 2 lettres du titre. Klap cherche dans tous les cinémas couverts, même loin de chez toi.</div>`; return; }
+  const near = c => INDEX ? Math.min(...c.map(id=>{ const x=INDEX.find(k=>k.id===id); return x?km(state.loc,x):1e9; })) : null;
+  const known = new Set((INDEX||[]).map(c=>c.id));
+  const hits = Object.entries(films).map(([id,f])=>[id,{...f, cs:f.cs.filter(c=>known.has(c))}]).filter(([,f])=>f.cs.length && (norm(f.t).includes(qq) || norm(f.ot).includes(qq)))
+    .map(([id,f])=>({id,f,starts:norm(f.t).startsWith(qq),d:near(f.cs)}))
+    .sort((a,b)=>(b.starts-a.starts) || (a.d-b.d)).slice(0,25);
+  if(!hits.length){ $("filmRes").innerHTML = `<div class="note">Aucun film « ${esc(q)} » à l'affiche dans les cinémas couverts en ce moment. Vérifie l'orthographe ou essaie un autre mot du titre.</div>`; return; }
+  $("filmRes").innerHTML = `<div class="group-label">Films</div>` + hits.map(({id,f,d})=>`<button class="fres" data-fpick="${id}">${posterImg(f)}<span><b>${esc(f.t)}</b><span>${f.cs.length} cinéma${f.cs.length>1?"s":""}${d!=null&&d<1e9?` · le plus proche à ${fmtKm(d)}`:""}</span></span><span class="km">›</span></button>`).join("");
+}
+async function showFilmCinemas(id){
+  const films = await getFilms(); const f=films[id]; if(!f) return;
+  const list = f.cs.map(cid=>INDEX.find(c=>c.id===cid)).filter(Boolean).map(c=>({...c, dist:km(state.loc,c)})).sort((a,b)=>a.dist-b.dist).slice(0,25);
+  const head = `<button class="back" data-fback>‹ Autres films</button><div class="fhead">${posterImg(f)}<div><b>${esc(f.t)}</b><span class="mini-s">${list.length} cinéma${list.length>1?"s":""}, du plus proche au plus loin</span></div></div>`;
+  $("filmRes").innerHTML = head + `<div class="note loading">Recherche des prochaines séances…</div>`;
+  await Promise.all([...new Set(list.slice(0,10).map(c=>c.dep))].map(getDep));
+  $("filmRes").innerHTML = head + list.map(c=>{
+    const cc={...c, days:(DEP[c.dep]&&DEP[c.dep].cinemas[c.id])||{}}; const n=nextIn(cc,id); const l=n&&dayLabel(n.d);
+    return `<button class="fres" data-fcine="${c.id}" data-fid="${id}" ${n?`data-fday="${n.d}"`:""}><span class="ico" style="width:44px;height:44px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;color:var(--accent)">${ICON.film}</span>
+      <span><b>${esc(c.name)}</b><span>${esc(c.town)} · ${fmtKm(c.dist)}</span></span>
+      <span class="nx">${n?`${l.top} ${n.s.h}${n.s.v==="VO"?" VO":""}`:"Voir ›"}</span></button>`;
+  }).join("");
+}
+
+/* ---------- location sheet: any town in France ---------- */
+let PLACES=[], searchTimer=null, searchSeq=0;
+function renderLocList(q=""){
+  const qq=norm(q.trim()); let h="";
+  const cines = qq.length>=2 && INDEX ? INDEX.filter(c=>norm(c.name+" "+c.town).includes(qq)).slice(0,8) : [];
+  if(!qq){
+    const recent = store.get("recent") || [];
+    if(recent.length) h += `<div class="group-label">Récents</div>` + recent.map((p,i)=>`<button class="row" data-recent="${i}"><span class="ico">${ICON.clock}</span><span><b>${esc(p.name)}</b><span>${esc(p.ctx||"")}</span></span>${state.loc.name===p.name?ICON.ok:""}</button>`).join("");
+    h += `<div class="group-label">Grandes villes</div>` + QUICK.map(([n],i)=>`<button class="row" data-quick="${i}"><span class="ico">${ICON.pin}</span><span><b>${n}</b></span>${state.loc.name===n?ICON.ok:""}</button>`).join("");
+  } else {
+    if(PLACES.length) h += `<div class="group-label">Villes</div>` + PLACES.map((p,i)=>`<button class="row" data-place="${i}"><span class="ico">${ICON.pin}</span><span><b>${esc(p.name)}</b><span>${esc(p.ctx)}</span></span></button>`).join("");
+    if(cines.length) h += `<div class="group-label">Cinémas</div>` + cines.map(c=>`<button class="row" data-pick="${c.id}"><span class="ico">${ICON.film}</span><span><b>${esc(c.name)}</b><span>${esc(c.town)}</span></span>${state.cine===c.id?ICON.ok:""}</button>`).join("");
+    if(!h) h = `<div class="note loading">Recherche…</div>`;
+  }
+  $("locList").innerHTML = h;
+}
+function searchPlaces(q){
+  clearTimeout(searchTimer); PLACES=[];
+  if(q.trim().length<2){ renderLocList(q); return; }
+  renderLocList(q);
+  const seq=++searchSeq;
+  searchTimer=setTimeout(()=>{
+    fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(q)}&type=municipality&limit=6`).then(r=>r.json()).then(j=>{
+      if(seq!==searchSeq) return;
+      PLACES=(j.features||[]).map(f=>({name:f.properties.city||f.properties.name, ctx:[f.properties.postcode,(f.properties.context||"").split(", ").slice(1).join(", ")].filter(Boolean).join(" · "), lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0]}));
+      renderLocList(q);
+      if(!PLACES.length && !$("locList").querySelector(".row")) $("locList").innerHTML=`<div class="note">Aucune ville trouvée pour « ${esc(q)} ». Vérifie l'orthographe ou tape un code postal.</div>`;
+    }).catch(()=>{ if(seq===searchSeq) $("locList").innerHTML=`<div class="note">Recherche impossible sans connexion. Réessaie dans un instant.</div>`; });
+  },250);
+}
+function remember(p){ const r=(store.get("recent")||[]).filter(x=>x.name!==p.name); r.unshift({name:p.name,ctx:p.ctx||"",lat:p.lat,lng:p.lng}); store.set("recent",r.slice(0,4)); }
+async function setLoc(loc, cine){
+  state.loc=loc; state.cine=cine||null; state.day=null; store.set("loc",loc); closeSheets(true); renderTop();
+  $("cineName").textContent="Recherche des cinémas…"; $("cineMeta").innerHTML=""; $("cineActions").innerHTML="";
+  await loadNearby(); renderAll();
+}
+
+/* ---------- sheets ---------- */
+let lastFocus=null;
+function lockPage(){ $("scroller").classList.add("locked"); }
+function unlockPage(){ $("scroller").classList.remove("locked"); }
+function openSheet(id){ lastFocus=document.activeElement; lockPage(); $("scrim").classList.add("open"); const s=$(id); s.style.transform=""; s.classList.add("open"); }
+/* closes the top panel only (a film opened from the search goes back to the results); closeSheets(true) closes them all */
+function closeSheets(all){ const open=[...document.querySelectorAll(".sheet.open")]; if(!open.length) return;
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  const shut = all===true ? open : [open[open.length-1]];
+  shut.forEach(s=>{s.classList.remove("open"); s.style.transform=""; if(s.id==="filmSheet") FILM=null;});
+  if(shut.length<open.length) return;
+  $("scrim").classList.remove("open"); unlockPage();
+  if(lastFocus && lastFocus.focus) try{ lastFocus.focus({preventScroll:true}); }catch(e){} }
+document.querySelectorAll(".sheet").forEach(s=>{
+  let y0=null, dy=0;
+  const start=e=>{ const body=s.querySelector(".sheet-body"); if(e.target.closest(".sheet-body") && body.scrollTop>0) return; if(e.target.closest("input,button,a")) return; y0=e.touches[0].clientY; dy=0; s.classList.add("dragging"); };
+  const move=e=>{ if(y0==null) return; dy=Math.max(0,e.touches[0].clientY-y0); if(dy>0){ s.style.transform=`translateY(${dy}px)`; if(e.cancelable) e.preventDefault(); } };
+  const end=()=>{ if(y0==null) return; s.classList.remove("dragging"); y0=null; if(dy>90) closeSheets(); else s.style.transform=""; };
+  s.addEventListener("touchstart",start,{passive:true}); s.addEventListener("touchmove",move,{passive:false}); s.addEventListener("touchend",end); s.addEventListener("touchcancel",end);
+});
+let tY=0, tX=0;
+document.addEventListener("touchstart",e=>{ tY=e.touches[0].clientY; tX=e.touches[0].clientX; },{passive:true});
+document.addEventListener("touchmove",e=>{
+  if(!e.cancelable || e.touches.length>1) return;
+  if(!document.querySelector(".sheet.open")){
+    const dy=e.touches[0].clientY-tY, dx=e.touches[0].clientX-tX, sc=$("scroller");
+    if(Math.abs(dy)<=Math.abs(dx)) return;
+    if(e.target.closest(".tabbar") || (dy>0 && sc.scrollTop<=0) || (dy<0 && sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1)) e.preventDefault();
+    return;
+  }
+  const list=e.target.closest(".sheet-body");
+  if(!list || list.scrollHeight<=list.clientHeight+1){ e.preventDefault(); return; }
+  const dy=e.touches[0].clientY-tY;
+  const atTop=list.scrollTop<=0, atEnd=list.scrollTop+list.clientHeight>=list.scrollHeight-1;
+  if((dy>0 && atTop) || (dy<0 && atEnd)) e.preventDefault();
+},{passive:false});
+$("scrim").addEventListener("touchmove",e=>{ if(e.cancelable) e.preventDefault(); },{passive:false});
+
+/* ---------- events ---------- */
+document.addEventListener("click", e=>{
+  const fs=e.target.closest("[data-fpick],[data-fback],[data-fcine]");
+  if(fs){ const d=fs.dataset;
+    if(d.fpick) return showFilmCinemas(d.fpick);
+    if(d.fback!==undefined) return searchFilms($("filmQ").value);
+    if(d.fcine){ const go=()=>openFilm(d.fid,{cine:d.fcine, day:d.fday});
+      const c=cineObj(d.fcine); return c ? getDep(c.dep).then(go) : go(); } }
+  const t=e.target.closest("[data-rate],[data-unwatch],[data-unseen],[data-watch],[data-seen],[data-tab],[data-cine],[data-day],[data-film],[data-place],[data-quick],[data-recent],[data-pick],[data-f],[data-close]"); if(!t) return;
+  const d=t.dataset;
+  if(d.close!==undefined) return closeSheets();
+  if(d.rate) return rate(d.rate, +d.n);
+  if(d.unwatch){ delete WATCH[d.unwatch]; store.set("watch",WATCH); return renderAll(); }
+  if(d.unseen){ delete SEEN[d.unseen]; store.set("seen",SEEN); return renderAll(); }
+  if(d.watch) return toggleWatch(d.watch);
+  if(d.seen) return toggleSeen(d.seen);
+  if(d.tab) return setTab(d.tab);
+  if(d.cine){ state.cine=d.cine; state.day=null; renderShow(); }
+  else if(d.day){ state.day=d.day; renderShow(); }
+  else if(d.film){ openFilm(d.film, d.cine2 ? {cine:d.cine2, day:d.day2} : null); }
+  else if(d.place){ const p=PLACES[+d.place]; remember(p); setLoc({kind:"city",name:p.name,lat:p.lat,lng:p.lng}); }
+  else if(d.quick){ const [n,lat,lng]=QUICK[+d.quick]; remember({name:n,lat,lng}); setLoc({kind:"city",name:n,lat,lng}); }
+  else if(d.recent){ const p=(store.get("recent")||[])[+d.recent]; if(p) setLoc({kind:"city",name:p.name,lat:p.lat,lng:p.lng}); }
+  else if(d.pick){ const c=INDEX.find(x=>x.id===d.pick); remember({name:c.town,ctx:c.name,lat:c.lat,lng:c.lng}); setLoc({kind:"city",name:c.town||c.name,lat:c.lat,lng:c.lng}, c.id); }
+  else if(d.f){ state.f[d.f]=!state.f[d.f]; t.setAttribute("aria-pressed",state.f[d.f]); renderShow(); }
+});
+$("scrim").onclick=()=>closeSheets();
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheets(); if(e.key==="Enter" && e.target.matches(".mini")) e.target.click(); });
+$("locBtn").onclick=()=>{ $("locSearch").value=""; PLACES=[]; renderLocList(); openSheet("locSheet"); };
+$("locSearch").oninput=e=>searchPlaces(e.target.value);
+let fTimer=null;
+$("filmSearchBtn").onclick=()=>{ $("filmQ").value=""; searchFilms(""); openSheet("searchSheet"); getFilms(); };
+$("filmQ").oninput=e=>{ clearTimeout(fTimer); const v=e.target.value; fTimer=setTimeout(()=>searchFilms(v),120); };
+$("filmQ").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); } };
+$("locSearch").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); } };
+$("endAlert").onclick=()=>{ state.f.ending=!state.f.ending; const ch=document.querySelector('[data-f="ending"]'); if(ch) ch.setAttribute("aria-pressed",state.f.ending); state.day=null; renderShow(); };
+$("sortSoon").onclick=()=>{state.sort="soon";$("sortSoon").setAttribute("aria-pressed",true);$("sortBest").setAttribute("aria-pressed",false);renderShow();};
+$("sortBest").onclick=()=>{state.sort="best";$("sortBest").setAttribute("aria-pressed",true);$("sortSoon").setAttribute("aria-pressed",false);renderShow();};
+let locating=false;
+/* the phone's real GPS: precise first, then a quicker standard fix if the precise one is slow */
+function gpsOnce(high){
+  return new Promise(res=>{
+    if(!navigator.geolocation) return res({err:0});
+    try{ navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}), e=>res({err:e.code}),
+      {enableHighAccuracy:high, timeout:high?20000:30000, maximumAge:0}); }catch(e){ res({err:0}); }
+  });
+}
+/* one tap: GPS only — never a guessed position */
+async function findMe(fromSheet){
+  if(locating) return; locating=true;
+  const btn=$("locateBtn"), st=$("gpsState"); btn.classList.add("busy");
+  if(fromSheet) st.textContent="Recherche de ta position…";
+  let g=await gpsOnce(true);
+  if(g.err===3 || g.err===2) g=await gpsOnce(false);
+  locating=false; btn.classList.remove("busy");
+  if(g.err!==undefined){
+    if(g.err===1){
+      if(fromSheet) st.textContent="Utiliser la position du téléphone";
+      const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+      if(ios){ closeSheets(true); openSheet("gpsSheet"); }
+      else toast("Autorise la position pour ce site (icône à gauche de l'adresse), puis réessaie");
+      return;
+    }
+    const msg="Position introuvable pour l'instant, réessaie";
+    if(fromSheet) st.textContent=msg; toast(msg); return;
+  }
+  if(fromSheet) st.textContent="Utiliser la position du téléphone";
+  let name="Autour de moi";
+  try{ const j=await (await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${g.lng}&lat=${g.lat}&type=municipality`)).json(); if(j.features&&j.features[0]) name=j.features[0].properties.city||name; }catch(e){}
+  await setLoc({kind:"gps", name, lat:g.lat, lng:g.lng});
+  toast(`Te voilà : ${name}`);
+}
+$("gpsBtn").onclick=()=>findMe(true);
+$("locateBtn").onclick=()=>findMe(false);
+
+/* no zoom, ever: pinch, double tap, or the auto-zoom on a text field */
+["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener("touchmove",e=>{ if(e.touches.length>1 && e.cancelable) e.preventDefault(); },{passive:false});
+let lastTap=0, lastEl=null;
+document.addEventListener("touchend",e=>{ const now=Date.now(); if(now-lastTap<300 && e.target===lastEl && !e.target.closest("input,textarea") && e.cancelable) e.preventDefault(); lastTap=now; lastEl=e.target; },{passive:false});
+document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
+["gesturestart","gesturechange"].forEach(t=>window.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+const pinTop=()=>{ if(window.scrollY||window.scrollX) window.scrollTo(0,0); };
+window.addEventListener("scroll",pinTop,{passive:true});
+document.addEventListener("focusin",()=>setTimeout(pinTop,0));
+if(window.visualViewport) visualViewport.addEventListener("scroll",pinTop);
+const vpMeta=document.querySelector('meta[name="viewport"]');
+function resetZoom(){ if(!vpMeta) return; const c=vpMeta.content; vpMeta.content=c.replace("maximum-scale=1","maximum-scale=1.0"); requestAnimationFrame(()=>{ vpMeta.content=c; }); }
+document.addEventListener("focusout",e=>{ if(e.target.matches("input,textarea")) setTimeout(resetZoom,50); });
+if(window.visualViewport) visualViewport.addEventListener("resize",()=>{ if(visualViewport.scale>1.01 && !document.activeElement.matches("input,textarea")) resetZoom(); });
+
+/* clock: time-dependent bits follow the minute */
+function tick(){ const d=new Date(); $("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+tick(); let lastMin=nowMin();
+setInterval(()=>{ tick(); const n=nowMin(); if(n!==lastMin){ lastMin=n; if(!document.querySelector(".sheet.open")) renderAll(); } }, 15000);
+
+/* splash: stays at least until the clap has slammed and "klap" is up, leaves once data is ready */
+const SPLASH_T0=Date.now(); let splashGone=false;
+function hideSplash(now){ if(splashGone) return; splashGone=true; const wait=now?0:Math.max(0,3700-(Date.now()-SPLASH_T0));
+  setTimeout(()=>{ const s=$("splash"); if(!s) return; s.classList.add("out"); setTimeout(()=>s.remove(),600); }, wait); }
+setTimeout(()=>hideSplash(),9000);
+$("splash").addEventListener("click",()=>{ splashGone=false; hideSplash(true); });
+let toastTimer=null;
+function toast(txt){ const t=$("toast"); $("toastTxt").textContent=txt; t.classList.remove("show"); void t.offsetWidth; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),1800); }
+/* start */
+renderTop(); renderWatch();
+fetch("cinemas.json").then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(async idx=>{ INDEX=idx; await loadNearby(); renderAll(); hideSplash(); })   // location is asked only when « Autour de moi » is tapped
+  .catch(()=>{ hideSplash(); $("cineName").textContent="Séances indisponibles"; $("list").innerHTML=`<div class="empty"><b>Impossible de charger les cinémas</b>Vérifie ta connexion et rouvre Klap.</div>`; });
+})();
+</script>
+</body>
+</html>
